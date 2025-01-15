@@ -8,23 +8,48 @@ import (
 )
 
 func main() {
-	f1, err := os.Open("sample1.txt")
-	if err != nil {
-		return
+	fileNames := parse()
+	if err := cat(fileNames); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func parse() []string {
+	return os.Args[1:]
+}
+
+func open(sources []string) (io.Reader, error) {
+	if len(sources) == 0 {
+		return os.Stdin, nil
 	}
 
-	f2, err := os.Open("sample2.txt")
-	if err != nil {
-		return
+	rs := make([]io.Reader, len(sources))
+	for _, s := range sources {
+		f, err := os.Open(s)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		rs = append(rs, f)
 	}
 
-	r := io.MultiReader(f1, f2)
+	return io.MultiReader(rs...), nil
+}
+
+func cat(srcs []string) error {
+	r, err := open(srcs)
+	if err != nil {
+		return err
+	}
+
 	w := bufio.NewWriter(os.Stdout)
 	if _, err := io.Copy(w, r); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := w.Flush(); err != nil {
-		return
+		return err
 	}
+
+	return nil
 }
