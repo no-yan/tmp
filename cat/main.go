@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"io"
 	"log"
 	"os"
@@ -12,7 +13,12 @@ func main() {
 		return
 	}
 
-	if _, err := io.Copy(os.Stdout, f); err != nil {
+	w := bufio.NewWriter(os.Stdout)
+	if _, err := io.Copy(w, f); err != nil {
 		log.Fatal(err)
+	}
+
+	if err := w.Flush(); err != nil {
+		return
 	}
 }
