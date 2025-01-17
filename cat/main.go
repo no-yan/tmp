@@ -9,7 +9,7 @@ import (
 
 func main() {
 	fileNames := parse()
-	if err := cat(fileNames); err != nil {
+	if err := cat(fileNames, os.Stdin, os.Stdout); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -18,16 +18,16 @@ func parse() []string {
 	return os.Args[1:]
 }
 
-func cat(srcs []string) error {
+func cat(srcs []string, in io.Reader, out io.Writer) error {
 	// if src is empty, read from Stdin
 	if len(srcs) == 0 {
-		if _, err := io.Copy(os.Stdout, os.Stdin); err != nil {
+		if _, err := io.Copy(out, in); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	w := bufio.NewWriter(os.Stdout)
+	w := bufio.NewWriter(out)
 	for _, src := range srcs {
 		if err := copyFileToWriter(src, w); err != nil {
 			return err
