@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
@@ -13,28 +14,54 @@ func main() {
 	if err != nil {
 		return
 	}
-	defer f.Close()
+	defer func() {
+		f.Close()
+		os.Remove(f.Name())
+	}()
 	fmt.Printf("tmp file: %s\n", f.Name())
 
-	w := io.MultiWriter(os.Stdout, f)
+	p := &progress{}
+	w := io.MultiWriter(os.Stdout, f, p)
 
-	if err := fetch(w); err != nil {
+	if err := fetch(w, p); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func fetch(w io.Writer) error {
+func fetch(w io.Writer, p *progress) error {
+	t := time.NewTicker(500 * time.Millisecond)
+	done := make(chan bool)
+	defer func() {
+		t.Stop()
+		done <- true
+	}()
+
 	url := parse()
 	res, err := request(url)
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
+
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case t := <-t.C:
+				bytesRead := p.Show()
+				fmt.Printf("%s: Downloaded %d bytes (%f %%)\n", t, bytesRead, float64(bytesRead)/float64(res.ContentLength)*100)
+			}
+		}
+	}()
 
 	_, err = io.Copy(w, res.Body)
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+
+	t.Stop()
+	done <- true
 
 	return nil
 }
