@@ -29,11 +29,11 @@ func main() {
 }
 
 func fetch(w io.Writer, p *progress) error {
-	t := time.NewTicker(500 * time.Millisecond)
+	t := time.NewTicker(1 * time.Second)
 	done := make(chan bool)
 	defer func() {
 		t.Stop()
-		done <- true
+		close(done)
 	}()
 
 	url := parse()
@@ -50,7 +50,11 @@ func fetch(w io.Writer, p *progress) error {
 				return
 			case t := <-t.C:
 				bytesRead := p.Show()
-				fmt.Printf("%s: Downloaded %d bytes (%f %%)\n", t, bytesRead, float64(bytesRead)/float64(res.ContentLength)*100)
+				fmt.Printf("%s: Downloaded %d bytes)", t, bytesRead)
+				if res.ContentLength > 0 {
+					fmt.Printf("(%f %%)", float64(bytesRead)/float64(res.ContentLength)*100)
+				}
+				fmt.Println()
 			}
 		}
 	}()
