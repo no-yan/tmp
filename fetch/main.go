@@ -50,11 +50,12 @@ func fetch(w io.Writer, p *progress) error {
 				return
 			case t := <-t.C:
 				bytesRead := p.Show()
-				fmt.Printf("%s: Downloaded %d bytes)", t, bytesRead)
 				if res.ContentLength > 0 {
-					fmt.Printf("(%f %%)", float64(bytesRead)/float64(res.ContentLength)*100)
+					percentage := float64(bytesRead) / float64(res.ContentLength) * 100
+					fmt.Printf("%s: Downloaded %d bytes (%.2f%%)\n", t, bytesRead, percentage)
+				} else {
+					fmt.Printf("%s: Downloaded %d bytes\n", t, bytesRead)
 				}
-				fmt.Println()
 			}
 		}
 	}()
