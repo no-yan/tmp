@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"testing/iotest"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 const (
@@ -48,22 +51,34 @@ func Test_cat(t *testing.T) {
 func Test_copyFileToWriter(t *testing.T) {
 	tests := map[string]struct {
 		src     string
-		w       io.Writer
+		want    string
 		wantErr bool
 	}{
-		"testdata": {"testdata/in/sample.txt", new(bytes.Buffer), noErr},
+		"testdata": {"testdata/in/sample.txt", "testdata/out/out.txt", noErr},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotErr := copyFileToWriter(tt.src, tt.w)
+			b := new(bytes.Buffer)
+			gotErr := copyFileToWriter(tt.src, b)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("copyFileToWriter() failed: %v", gotErr)
 				}
 				return
 			}
+
 			if tt.wantErr {
 				t.Fatal("copyFileToWriter() succeeded unexpectedly")
+			}
+
+			want, err := os.ReadFile(tt.want)
+			if err != nil {
+				t.Errorf("os.ReadFile failed: %v, filename: %s", err, tt.want)
+				return
+			}
+
+			if diff := cmp.Diff(b.Bytes(), want); diff != "" {
+				t.Fatalf("copyFileToWriter() mismatch: (-got +want):\n%s", diff)
 			}
 		})
 	}

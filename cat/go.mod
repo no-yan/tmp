@@ -1,3 +1,5 @@
 module github.com/no-yan/tmp/cat
 
 go 1.22.5
+
+require github.com/google/go-cmp v0.6.0
