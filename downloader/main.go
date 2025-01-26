@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
 	"net/http"
 	"sync"
+	"time"
+
+	"github.com/no-yan/tmp/downloader/internal/backoff"
 )
 
 func main() {
@@ -60,10 +64,26 @@ func downloadAll(urls []string, c chan Result) {
 }
 
 func download(url string) Result {
-	resp, err := http.Get(url)
-	if err != nil {
-		return NewErrorResult(err)
+	p := backoff.Policy{
+		DelayMin:   time.Millisecond,
+		DelayMax:   20 * time.Millisecond,
+		Timeout:    10 * time.Second,
+		RetryLimit: 10,
+	}
+	b, ctx, cancel := p.NewBackoff(context.Background())
+	defer cancel()
+
+	var err error
+	for backoff.Continue(ctx, b) {
+		var resp *http.Response
+		resp, err = http.Get(url)
+		if err == nil {
+			return Result{
+				Body: resp.Body,
+				Err:  nil,
+			}
+		}
 	}
 
-	return Result{Body: resp.Body, Err: nil}
+	return Result{nil, fmt.Errorf("retry failed; last error: %v", err)}
 }
