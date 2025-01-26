@@ -31,7 +31,7 @@ func main() {
 	downloadAll(args, c, defaultPolicy)
 
 	for result := range c {
-		result.Report()
+		print(result)
 	}
 }
 
@@ -40,7 +40,11 @@ type Result struct {
 	Err  error
 }
 
-func (r Result) Report() {
+func NewErrorResult(err error) Result {
+	return Result{Body: nil, Err: err}
+}
+
+func print(r Result) {
 	fmt.Println("=============================")
 	if r.Err != nil {
 		fmt.Printf("Error: %v\n", r.Err)
@@ -53,10 +57,6 @@ func (r Result) Report() {
 		panic(err)
 	}
 	fmt.Printf("Body: \n%s", string(b))
-}
-
-func NewErrorResult(err error) Result {
-	return Result{Body: nil, Err: err}
 }
 
 func downloadAll(urls []string, c chan Result, policy backoff.Policy) {
