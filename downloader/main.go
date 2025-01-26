@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/no-yan/multierr"
 	"github.com/no-yan/tmp/downloader/internal/backoff"
 )
 
@@ -73,17 +74,18 @@ func download(url string) Result {
 	b, ctx, cancel := p.NewBackoff(context.Background())
 	defer cancel()
 
-	var err error
+	m := multierr.New()
 	for backoff.Continue(ctx, b) {
-		var resp *http.Response
-		resp, err = http.Get(url)
+		resp, err := http.Get(url)
 		if err == nil {
 			return Result{
 				Body: resp.Body,
 				Err:  nil,
 			}
 		}
+
+		m.Add(err)
 	}
 
-	return Result{nil, fmt.Errorf("retry failed; last error: %v", err)}
+	return Result{nil, fmt.Errorf("retry failed; got error\n%v", m.Err())}
 }
