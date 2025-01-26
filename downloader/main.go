@@ -31,24 +31,28 @@ func main() {
 	downloadAll(args, c, defaultPolicy)
 
 	for result := range c {
-		fmt.Println("=============================")
-		if result.Err != nil {
-			fmt.Printf("Error: %v\n", result.Err)
-			continue
-		}
-
-		b, err := io.ReadAll(result.Body)
-		result.Body.Close()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("Body: \n%s", string(b))
+		result.Report()
 	}
 }
 
 type Result struct {
 	Body io.ReadCloser
 	Err  error
+}
+
+func (r Result) Report() {
+	fmt.Println("=============================")
+	if r.Err != nil {
+		fmt.Printf("Error: %v\n", r.Err)
+		return
+	}
+
+	b, err := io.ReadAll(r.Body)
+	r.Body.Close()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Body: \n%s", string(b))
 }
 
 func NewErrorResult(err error) Result {
