@@ -13,6 +13,13 @@ import (
 	"github.com/no-yan/tmp/downloader/internal/backoff"
 )
 
+var defaultPolicy = backoff.Policy{
+	DelayMin:   time.Millisecond,
+	DelayMax:   20 * time.Millisecond,
+	Timeout:    10 * time.Second,
+	RetryLimit: 10,
+}
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
@@ -21,7 +28,7 @@ func main() {
 
 	c := make(chan Result)
 
-	downloadAll(args, c)
+	downloadAll(args, c, defaultPolicy)
 
 	for result := range c {
 		fmt.Println("=============================")
@@ -48,13 +55,13 @@ func NewErrorResult(err error) Result {
 	return Result{Body: nil, Err: err}
 }
 
-func downloadAll(urls []string, c chan Result) {
+func downloadAll(urls []string, c chan Result, policy backoff.Policy) {
 	wg := sync.WaitGroup{}
 	for _, url := range urls {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
-			c <- download(url)
+			c <- download(url, policy)
 		}(url)
 	}
 
@@ -64,13 +71,7 @@ func downloadAll(urls []string, c chan Result) {
 	}()
 }
 
-func download(url string) Result {
-	p := backoff.Policy{
-		DelayMin:   time.Millisecond,
-		DelayMax:   20 * time.Millisecond,
-		Timeout:    10 * time.Second,
-		RetryLimit: 10,
-	}
+func download(url string, p backoff.Policy) Result {
 	b, ctx, cancel := p.NewBackoff(context.Background())
 	defer cancel()
 

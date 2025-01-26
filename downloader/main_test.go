@@ -90,7 +90,7 @@ func TestDownload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testURL := ts.URL + tt.urlPath
-			result := download(testURL)
+			result := download(testURL, defaultPolicy)
 
 			if (result.Err != nil) != tt.expectErr {
 				t.Fatalf("expected error: %v, got: %v", tt.expectErr, result.Err)
