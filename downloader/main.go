@@ -14,11 +14,9 @@ func main() {
 
 	fmt.Printf("URL: %s\n", args)
 
-	wg := sync.WaitGroup{}
 	c := make(chan Result)
 
-	go downloadAndSend(args, c, &wg)
-	wg.Wait()
+	downloadAll(args, c)
 
 	for result := range c {
 		fmt.Println("=============================")
@@ -27,15 +25,12 @@ func main() {
 			continue
 		}
 
-		go func() {
-			defer result.Body.Close()
-
-			b, err := io.ReadAll(result.Body)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("Body: \n%s", string(b))
-		}()
+		b, err := io.ReadAll(result.Body)
+		result.Body.Close()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Body: \n%s", string(b))
 	}
 }
 
@@ -48,14 +43,20 @@ func NewErrorResult(err error) Result {
 	return Result{Body: nil, Err: err}
 }
 
-func downloadAndSend(urls []string, c chan Result, wg *sync.WaitGroup) {
-	wg.Add(len(urls))
+func downloadAll(urls []string, c chan Result) {
+	wg := sync.WaitGroup{}
 	for _, url := range urls {
-		go func() {
-			c <- download(url)
+		wg.Add(1)
+		go func(url string) {
 			defer wg.Done()
-		}()
+			c <- download(url)
+		}(url)
 	}
+
+	go func() {
+		wg.Wait()
+		close(c)
+	}()
 }
 
 func download(url string) Result {
