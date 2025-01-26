@@ -45,7 +45,6 @@ func NewErrorResult(err error) Result {
 }
 
 func print(r Result) {
-	fmt.Println("=============================")
 	if r.Err != nil {
 		fmt.Printf("Error: %v\n", r.Err)
 		return
@@ -99,5 +98,5 @@ func download(url string, p backoff.Policy) Result {
 
 	}
 
-	return Result{nil, fmt.Errorf("retry failed; got error\n%v", m.Err())}
+	return Result{nil, fmt.Errorf("retry failed; got error:\n%v", m.Err())}
 }
