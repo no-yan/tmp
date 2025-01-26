@@ -21,7 +21,7 @@ func (p Policy) Next(cnt uint) time.Duration {
 	case delayMS > p.DelayMax.Milliseconds():
 		return p.DelayMax
 	default:
-		return time.Duration(delayMS * int64(time.Millisecond))
+		return time.Duration(delayMS) * time.Millisecond
 	}
 }
 
