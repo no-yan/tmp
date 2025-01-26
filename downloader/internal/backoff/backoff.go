@@ -13,8 +13,11 @@ type Policy struct {
 }
 
 func (p Policy) Next(cnt uint) time.Duration {
-	delayMS := int64(1) << cnt
+	if cnt < 1 {
+		return 0
+	}
 
+	delayMS := int64(1) << (cnt - 1)
 	switch {
 	case delayMS < p.DelayMin.Milliseconds():
 		return p.DelayMin
