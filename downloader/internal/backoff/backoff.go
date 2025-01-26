@@ -17,14 +17,14 @@ func (p Policy) Next(cnt uint) time.Duration {
 		return 0
 	}
 
-	delayMS := int64(1) << (cnt - 1)
+	delay := p.DelayMin << (cnt - 1)
 	switch {
-	case delayMS < p.DelayMin.Milliseconds():
+	case delay < p.DelayMin:
 		return p.DelayMin
-	case delayMS > p.DelayMax.Milliseconds():
+	case delay > p.DelayMax:
 		return p.DelayMax
 	default:
-		return time.Duration(delayMS) * time.Millisecond
+		return delay
 	}
 }
 

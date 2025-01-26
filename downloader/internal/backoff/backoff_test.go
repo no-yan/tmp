@@ -23,10 +23,10 @@ func TestPolicy_Next(t *testing.T) {
 			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
 			want:   10 * time.Millisecond,
 		},
-		"exponential retry": {
-			cnt:    5,
+		"": {
+			cnt:    3,
 			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
-			want:   16 * time.Millisecond,
+			want:   40 * time.Millisecond,
 		},
 		"reach DelayMax": {
 			cnt:    10,
