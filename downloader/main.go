@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/no-yan/tmp/downloader/internal/backoff"
@@ -24,7 +25,7 @@ func main() {
 
 	c := make(chan Result)
 	pub := NewPublisher()
-	pub.Register(NopSubscriber{})
+	pub.Register(NopSubscriber{}, ProgressBar{os.Stdout})
 
 	downloadAll(args, c, &defaultPolicy, pub)
 
@@ -39,12 +40,12 @@ func print(r Result, pub *Publisher) {
 		return
 	}
 
-	b, err := io.ReadAll(r.Body)
+	_, err := io.ReadAll(r.Body)
 	r.Body.Close()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Body: \n%s", string(b))
+	// fmt.Printf("Body: \n%s", string(b))
 
-	pub.Publish(News{EventEnd})
+	pub.Publish(News{EventEnd, 100, 100})
 }
