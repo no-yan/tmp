@@ -25,7 +25,8 @@ func main() {
 
 	c := make(chan Result)
 	pub := NewPublisher()
-	pub.Register(NopSubscriber{}, ProgressBar{os.Stdout})
+	progressBar := NewProgressBar(args[0], os.Stdout)
+	pub.Register(NopSubscriber{}, progressBar)
 
 	downloadAll(args, c, &defaultPolicy, pub)
 

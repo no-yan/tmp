@@ -34,13 +34,17 @@ func (p ProgressReader) Close() error {
 }
 
 type ProgressBar struct {
-	w io.Writer
+	title string
+	w     io.Writer
+}
+
+func NewProgressBar(title string, w io.Writer) *ProgressBar {
+	return &ProgressBar{title, w}
 }
 
 func (p ProgressBar) HandleEvent(news News) {
 	switch news.Event {
 	case EventStart:
-		fmt.Println("Start")
 	case EventProgress:
 		p.Render(int(news.CurrentSize), int(news.TotalSize))
 	case EventEnd:
@@ -58,6 +62,6 @@ func (p ProgressBar) Render(current, total int) {
 	} else {
 		percent = 0
 	}
-	text := fmt.Sprintf("\r%s [%d/%d MB] (%f%%)", "title", current, total, percent)
+	text := fmt.Sprintf("\r%s [%d/%d MB] (%.1f%%)", p.title, current, total, percent)
 	io.WriteString(p.w, text)
 }
