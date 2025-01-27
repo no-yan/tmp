@@ -1,0 +1,8 @@
+run: build
+  ./a.out http://localhost:8080/1 http://localhost:8080/2 http://localhost:8080/3 http://localhost:8080/4 http://localhost:8080/5
+
+test:
+  go test ./...
+
+build:
+  go build -o a.out
