@@ -15,11 +15,13 @@ const (
 )
 
 type News struct {
-	Event Event
+	Event       Event
+	TotalSize   int64
+	CurrentSize int64
 }
 
 type Subscriber interface {
-	Update(news News)
+	HandleEvent(news News)
 }
 
 type Publisher struct {
@@ -34,16 +36,14 @@ func NewPublisher() *Publisher {
 func (p *Publisher) Register(s ...Subscriber) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	for _, sub := range s {
-		p.sub = append(p.sub, sub)
-	}
+	p.sub = append(p.sub, s...)
 }
 
 func (p *Publisher) Cancel(s Subscriber) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if i := slices.Index(p.sub, s); i > 0 {
-		slices.Delete(p.sub, i, i+1)
+	if i := slices.Index(p.sub, s); i >= 0 {
+		p.sub = slices.Delete(p.sub, i, i+1)
 	}
 }
 
@@ -52,10 +52,10 @@ func (p *Publisher) Publish(news News) {
 	defer p.mu.Unlock()
 
 	for _, obs := range p.sub {
-		obs.Update(news)
+		obs.HandleEvent(news)
 	}
 }
 
 type NopSubscriber struct{}
 
-func (n NopSubscriber) Update(News) {}
+func (n NopSubscriber) HandleEvent(News) {}

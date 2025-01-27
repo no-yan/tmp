@@ -12,20 +12,20 @@ import (
 )
 
 type Downloader struct {
-	url       string
-	policy    *backoff.Policy
-	publisher *Publisher
+	url    string
+	policy *backoff.Policy
+	pub    *Publisher
 }
 
 func NewDownloader(url string, policy *backoff.Policy, publisher *Publisher) *Downloader {
-	return &Downloader{url: url, policy: policy, publisher: publisher}
+	return &Downloader{url: url, policy: policy, pub: publisher}
 }
 
 func (d *Downloader) Run() Result {
 	b, ctx, cancel := d.policy.NewBackoff(context.Background())
 	defer cancel()
 
-	d.publisher.Publish(News{EventStart})
+	d.pub.Publish(News{EventStart, 0, 0})
 	m := multierr.New()
 	for backoff.Continue(ctx, b) {
 		resp, err := http.Get(d.url)
@@ -42,7 +42,14 @@ func (d *Downloader) Run() Result {
 			continue
 		}
 
-		return Result{resp.Body, nil}
+		progressReader := ProgressReader{
+			r:       resp.Body,
+			current: 0,
+			total:   int(resp.ContentLength),
+			pub:     d.pub,
+		}
+
+		return Result{progressReader, nil}
 	}
 
 	return Result{nil, fmt.Errorf("retry failed; got error:\n%v", m.Err())}
