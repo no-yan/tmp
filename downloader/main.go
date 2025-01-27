@@ -23,15 +23,17 @@ func main() {
 	fmt.Printf("URL: %s\n", args)
 
 	c := make(chan Result)
+	pub := NewPublisher()
+	pub.Register(NopSubscriber{})
 
-	downloadAll(args, c, defaultPolicy)
+	downloadAll(args, c, &defaultPolicy, pub)
 
 	for result := range c {
-		print(result)
+		print(result, pub)
 	}
 }
 
-func print(r Result) {
+func print(r Result, pub *Publisher) {
 	if r.Err != nil {
 		fmt.Printf("Error: %v\n", r.Err)
 		return
@@ -43,4 +45,6 @@ func print(r Result) {
 		panic(err)
 	}
 	fmt.Printf("Body: \n%s", string(b))
+
+	pub.Publish("end")
 }

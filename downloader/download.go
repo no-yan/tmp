@@ -12,18 +12,20 @@ import (
 )
 
 type Downloader struct {
-	url    string
-	policy *backoff.Policy
+	url       string
+	policy    *backoff.Policy
+	publisher *Publisher
 }
 
-func NewDownloader(url string, policy *backoff.Policy) *Downloader {
-	return &Downloader{url: url, policy: policy}
+func NewDownloader(url string, policy *backoff.Policy, publisher *Publisher) *Downloader {
+	return &Downloader{url: url, policy: policy, publisher: publisher}
 }
 
 func (d *Downloader) Run() Result {
 	b, ctx, cancel := d.policy.NewBackoff(context.Background())
 	defer cancel()
 
+	d.publisher.Publish("start")
 	m := multierr.New()
 	for backoff.Continue(ctx, b) {
 		resp, err := http.Get(d.url)
@@ -41,7 +43,6 @@ func (d *Downloader) Run() Result {
 		}
 
 		return Result{resp.Body, nil}
-
 	}
 
 	return Result{nil, fmt.Errorf("retry failed; got error:\n%v", m.Err())}
@@ -56,13 +57,13 @@ func NewErrorResult(err error) Result {
 	return Result{Body: nil, Err: err}
 }
 
-func downloadAll(urls []string, c chan Result, policy backoff.Policy) {
+func downloadAll(urls []string, c chan Result, policy *backoff.Policy, publisher *Publisher) {
 	wg := sync.WaitGroup{}
 	for _, url := range urls {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
-			d := NewDownloader(url, &policy)
+			d := NewDownloader(url, policy, publisher)
 			c <- d.Run()
 		}(url)
 	}
