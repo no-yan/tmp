@@ -25,7 +25,7 @@ func (d *Downloader) Run() Result {
 	b, ctx, cancel := d.policy.NewBackoff(context.Background())
 	defer cancel()
 
-	d.publisher.Publish("start")
+	d.publisher.Publish(News{EventStart})
 	m := multierr.New()
 	for backoff.Continue(ctx, b) {
 		resp, err := http.Get(d.url)

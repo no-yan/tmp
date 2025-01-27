@@ -11,11 +11,11 @@ const (
 	EventStart Event = iota
 	EventProgress
 	EventEnd
+	EventAbort
 )
 
 type News struct {
-	Message string
-	Event   Event
+	Event Event
 }
 
 type Subscriber interface {

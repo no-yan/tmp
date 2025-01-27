@@ -46,5 +46,5 @@ func print(r Result, pub *Publisher) {
 	}
 	fmt.Printf("Body: \n%s", string(b))
 
-	pub.Publish("end")
+	pub.Publish(News{EventEnd})
 }
