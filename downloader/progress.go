@@ -5,34 +5,6 @@ import (
 	"io"
 )
 
-func NewProgressReader(r io.ReadCloser, current int, total int, pub *Publisher) *ProgressReader {
-	return &ProgressReader{r: r, current: current, total: total, pub: pub}
-}
-
-type ProgressReader struct {
-	r       io.ReadCloser
-	current int
-	total   int
-	pub     *Publisher
-}
-
-func (p ProgressReader) Read(n []byte) (int, error) {
-	nn, err := p.r.Read(n)
-	p.current += nn
-
-	p.pub.Publish(News{
-		Event:       EventProgress,
-		TotalSize:   int64(p.total),
-		CurrentSize: int64(p.current),
-	})
-
-	return nn, err
-}
-
-func (p ProgressReader) Close() error {
-	return p.r.Close()
-}
-
 type ProgressBar struct {
 	title string
 	w     io.Writer

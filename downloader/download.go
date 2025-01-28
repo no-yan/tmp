@@ -42,14 +42,8 @@ func (d *Downloader) Run() Result {
 			continue
 		}
 
-		progressReader := ProgressReader{
-			r:       resp.Body,
-			current: 0,
-			total:   int(resp.ContentLength),
-			pub:     d.pub,
-		}
 
-		return Result{progressReader, nil}
+		return Result{resp.Body, nil}
 	}
 
 	return Result{nil, fmt.Errorf("retry failed; got error:\n%v", m.Err())}
