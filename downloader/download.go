@@ -11,17 +11,37 @@ import (
 	"github.com/no-yan/tmp/downloader/internal/backoff"
 )
 
-type Downloader struct {
+func downloadAll(urls []string, policy *backoff.Policy, publisher *Publisher) chan Result {
+	c := make(chan Result, 1)
+	wg := sync.WaitGroup{}
+	for _, url := range urls {
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+			d := NewDownloadWorker(url, policy, publisher)
+			c <- d.Run()
+		}(url)
+	}
+
+	go func() {
+		wg.Wait()
+		close(c)
+	}()
+
+	return c
+}
+
+type DownloadWorker struct {
 	url    string
 	policy *backoff.Policy
 	pub    *Publisher
 }
 
-func NewDownloader(url string, policy *backoff.Policy, publisher *Publisher) *Downloader {
-	return &Downloader{url: url, policy: policy, pub: publisher}
+func NewDownloadWorker(url string, policy *backoff.Policy, publisher *Publisher) *DownloadWorker {
+	return &DownloadWorker{url: url, policy: policy, pub: publisher}
 }
 
-func (d *Downloader) Run() Result {
+func (d *DownloadWorker) Run() Result {
 	b, ctx, cancel := d.policy.NewBackoff(context.Background())
 	defer cancel()
 
@@ -42,6 +62,7 @@ func (d *Downloader) Run() Result {
 			continue
 		}
 
+		d.pub.Publish(News{EventStart, resp.ContentLength, 0})
 
 		return Result{resp.Body, nil}
 	}
@@ -56,21 +77,4 @@ type Result struct {
 
 func NewErrorResult(err error) Result {
 	return Result{Body: nil, Err: err}
-}
-
-func downloadAll(urls []string, c chan Result, policy *backoff.Policy, publisher *Publisher) {
-	wg := sync.WaitGroup{}
-	for _, url := range urls {
-		wg.Add(1)
-		go func(url string) {
-			defer wg.Done()
-			d := NewDownloader(url, policy, publisher)
-			c <- d.Run()
-		}(url)
-	}
-
-	go func() {
-		wg.Wait()
-		close(c)
-	}()
 }

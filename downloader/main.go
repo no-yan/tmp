@@ -23,14 +23,13 @@ func main() {
 
 	fmt.Printf("URL: %s\n", args)
 
-	c := make(chan Result)
 	pub := NewPublisher()
 	progressBar := NewProgressBar(args[0], os.Stdout)
 	pub.Register(NopSubscriber{}, progressBar)
 
-	downloadAll(args, c, &defaultPolicy, pub)
+	downloadChannel := downloadAll(args, &defaultPolicy, pub)
 
-	for result := range c {
+	for result := range downloadChannel {
 		print(result, pub)
 	}
 }
