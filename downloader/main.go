@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"io"
 	"time"
 
 	"github.com/no-yan/tmp/downloader/internal/backoff"
@@ -29,13 +28,7 @@ func main() {
 	tasks := NewTasks(args...)
 	dc := NewDownloadController(tasks, &defaultPolicy, pub)
 	c := dc.Run(ctx)
+	<-c
 
-	for range c {
-	}
-}
-
-type Printer struct {
-	results []Result
-	r       io.Reader
-	w       io.Writer
+	progressBar.Flush()
 }

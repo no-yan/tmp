@@ -51,13 +51,13 @@ type DownloadController struct {
 	tasks  map[string]Task
 	policy *backoff.Policy
 	pub    *pubsub.Publisher[News]
-	c      chan Result
+	c      chan bool
 	sem    chan int
 	wg     *sync.WaitGroup
 }
 
 func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[News]) *DownloadController {
-	c := make(chan Result)
+	c := make(chan bool)
 	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
 
@@ -71,7 +71,7 @@ func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsu
 	}
 }
 
-func (dc *DownloadController) Run(ctx context.Context) chan Result {
+func (dc *DownloadController) Run(ctx context.Context) chan bool {
 	for url := range dc.tasks {
 		dc.wg.Add(1)
 		go func(url string) {
@@ -82,7 +82,7 @@ func (dc *DownloadController) Run(ctx context.Context) chan Result {
 			defer func() { <-dc.sem }()
 
 			d := NewDownloadWorker(url, dc.policy, dc.pub)
-			dc.c <- d.Run(ctx)
+			d.Run(ctx) // TODO: エラーハンドリング
 		}(url)
 	}
 
@@ -104,7 +104,7 @@ func NewDownloadWorker(url string, policy *backoff.Policy, publisher *pubsub.Pub
 	return &DownloadWorker{url: url, policy: policy, pub: publisher}
 }
 
-func (d *DownloadWorker) Run(ctx context.Context) Result {
+func (d *DownloadWorker) Run(ctx context.Context) error {
 	b := d.policy.NewBackoff()
 
 	m := multierr.New()
@@ -143,17 +143,8 @@ func (d *DownloadWorker) Run(ctx context.Context) Result {
 			CurrentSize: int64(len(b)),
 			URL:         d.url,
 		})
-		return Result{b, nil}
+		return nil
 	}
 
-	return Result{nil, fmt.Errorf("retry failed; got error:\n%v", m.Err())}
-}
-
-type Result struct {
-	Body []byte
-	Err  error
-}
-
-func NewErrorResult(err error) Result {
-	return Result{Body: nil, Err: err}
+	return m.Err()
 }
