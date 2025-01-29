@@ -47,26 +47,28 @@ func NewTasks(urls ...string) Tasks {
 }
 
 type DownloadController struct {
-	tasks  map[string]Task
-	policy *backoff.Policy
-	pub    *pubsub.Publisher[News]
-	c      chan Result
-	sem    chan int
-	wg     *sync.WaitGroup
+	tasks   map[string]Task
+	policy  *backoff.Policy
+	pub     *pubsub.Publisher[News]
+	c       chan Result
+	sem     chan int
+	wg      *sync.WaitGroup
+	printer *Printer
 }
 
-func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[News]) *DownloadController {
+func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[News], printer *Printer) *DownloadController {
 	c := make(chan Result)
 	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
 
 	return &DownloadController{
-		c:      c,
-		sem:    sem,
-		policy: policy,
-		pub:    publisher,
-		wg:     &wg,
-		tasks:  tasks,
+		c:       c,
+		sem:     sem,
+		policy:  policy,
+		pub:     publisher,
+		wg:      &wg,
+		tasks:   tasks,
+		printer: printer,
 	}
 }
 
@@ -78,7 +80,7 @@ func (dc *DownloadController) Run(ctx context.Context) chan Result {
 
 			// semaphore
 			dc.sem <- 1
-			defer func() { <-dc.sem }() // FIXME: Bodyのreadはセマフォでコントロールされていない
+			defer func() { <-dc.sem }()
 
 			d := NewDownloadWorker(url, dc.policy, dc.pub)
 			dc.c <- d.Run(ctx)
@@ -110,6 +112,7 @@ func (d *DownloadWorker) Run(ctx context.Context) Result {
 	fmt.Println(d.url)
 	d.pub.Publish(News{EventStart, 0, 0})
 	m := multierr.New()
+
 	for backoff.Continue(ctx, b) {
 		resp, err := http.Get(d.url)
 		if err != nil {
@@ -127,14 +130,19 @@ func (d *DownloadWorker) Run(ctx context.Context) Result {
 
 		d.pub.Publish(News{EventStart, resp.ContentLength, 0})
 
-		return Result{resp.Body, nil}
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
+		resp.Body.Close()
+		return Result{b, nil}
 	}
 
 	return Result{nil, fmt.Errorf("retry failed; got error:\n%v", m.Err())}
 }
 
 type Result struct {
-	Body io.ReadCloser
+	Body []byte
 	Err  error
 }
 

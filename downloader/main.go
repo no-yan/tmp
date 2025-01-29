@@ -31,26 +31,25 @@ func main() {
 	pub.Register(NopSubscriber{}, progressBar)
 
 	tasks := NewTasks(args...)
-	dc := NewDownloadController(tasks, &defaultPolicy, pub)
-	downloadChannel := dc.Run(ctx)
+	printer := NewPrinter(os.Stdout, pub)
+	dc := NewDownloadController(tasks, &defaultPolicy, pub, printer)
 
-	for result := range downloadChannel {
-		print(result, pub)
+	for result := range dc.Run(ctx) {
+		printer.Print(result.Body)
 	}
 }
 
-func print(r Result, pub *pubsub.Publisher[News]) {
-	if r.Err != nil {
-		fmt.Printf("Error: %v\n", r.Err)
-		return
-	}
+type Printer struct {
+	results []Result
+	r       io.Reader
+	w       io.Writer
+	pub     *pubsub.Publisher[News]
+}
 
-	b, err := io.ReadAll(r.Body)
-	r.Body.Close()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Body: \n%s", string(b))
+func NewPrinter(dst io.Writer, pub *pubsub.Publisher[News]) *Printer {
+	return &Printer{w: dst, pub: pub}
+}
 
-	pub.Publish(News{EventEnd, 100, 100})
+func (p *Printer) Print(b []byte) {
+	p.w.Write(b)
 }
