@@ -1,39 +1,69 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 )
 
-type ProgressBar struct {
-	title string
-	w     io.Writer
+type (
+	bars             map[string]*mpb.Bar
+	MultiProgressBar struct {
+		p    *mpb.Progress
+		bars bars
+	}
+)
+
+func NewMultiProgressBar() *MultiProgressBar {
+	p := mpb.New(mpb.WithWidth(64))
+	bars := make(bars)
+
+	return &MultiProgressBar{
+		p:    p,
+		bars: bars,
+	}
 }
 
-func NewProgressBar(title string, w io.Writer) *ProgressBar {
-	return &ProgressBar{title, w}
+func (p *MultiProgressBar) Flush() {
+	p.p.Wait()
 }
 
-func (p ProgressBar) HandleEvent(news News) {
+func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
+	name := title
+	return p.p.New(int64(100),
+
+		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
+		mpb.BarFillerClearOnComplete(),
+		mpb.PrependDecorators(
+			decor.Name(name, decor.WC{C: decor.DindentRight | decor.DextraSpace}),
+			decor.Name("downloading", decor.WCSyncSpaceR),
+			decor.OnComplete(decor.Percentage(decor.WC{W: 5}), "done"),
+		),
+		mpb.AppendDecorators(decor.Percentage()),
+	)
+}
+
+func (p MultiProgressBar) HandleEvent(news News) {
 	switch news.Event {
 	case EventStart:
+		bar := p.CreateBar(news.URL)
+		p.bars[news.URL] = bar
+
 	case EventProgress:
-		p.Render(int(news.CurrentSize), int(news.TotalSize))
+		b, ok := p.findBar(news.URL)
+		if !ok {
+			panic("bar not found")
+		}
+		b.Increment()
 	case EventEnd:
-		p.Clear()
+		b, ok := p.findBar(news.URL)
+		if !ok {
+			panic("bar not found")
+		}
+		b.IncrBy(100)
 	}
 }
 
-func (p ProgressBar) Clear() {
-}
-
-func (p ProgressBar) Render(current, total int) {
-	var percent float64
-	if total > 0 {
-		percent = float64(current) / float64(total) * 100
-	} else {
-		percent = 0
-	}
-	text := fmt.Sprintf("\r%s [%d/%d MB] (%.1f%%)", p.title, current, total, percent)
-	io.WriteString(p.w, text)
+func (p *MultiProgressBar) findBar(url string) (bar *mpb.Bar, ok bool) {
+	bar, ok = p.bars[url]
+	return
 }
