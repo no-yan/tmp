@@ -15,22 +15,22 @@ func TestPolicy_Next(t *testing.T) {
 	}{
 		"first retry": {
 			cnt:    0,
-			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
+			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, 10},
 			want:   0,
 		},
 		"second retry": {
 			cnt:    1,
-			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
+			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, 10},
 			want:   10 * time.Millisecond,
 		},
 		"third retry": {
 			cnt:    3,
-			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
+			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, 10},
 			want:   40 * time.Millisecond,
 		},
 		"reach DelayMax": {
 			cnt:    10,
-			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
+			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, 10},
 			want:   100 * time.Millisecond,
 		},
 	}
