@@ -29,26 +29,40 @@ func main() {
 	defer cancel()
 	pub := pubsub.NewPublisher[News]()
 	progressBar := NewProgressBar(args[0], os.Stdout)
-	pub.Register(NopSubscriber{}, progressBar)
+	printer := NewPrinter(os.Stdout)
+	pub.Register(NopSubscriber{}, progressBar, printer)
 
 	tasks := NewTasks(args...)
 	dc := NewDownloadController(tasks, &defaultPolicy, pub)
 	c := dc.Run(ctx)
 
-	<-c
+	for range c {
+	}
 }
 
 type Printer struct {
 	results []Result
 	r       io.Reader
 	w       io.Writer
-	pub     *pubsub.Publisher[News]
 }
 
-func NewPrinter(dst io.Writer, pub *pubsub.Publisher[News]) *Printer {
-	return &Printer{w: dst, pub: pub}
+func NewPrinter(dst io.Writer) *Printer {
+	return &Printer{w: dst}
 }
 
-func (p *Printer) Print(b []byte) {
-	p.w.Write(b)
+func (p *Printer) HandleEvent(news News) {
+	var msg string
+	switch news.Event {
+	case EventStart:
+		msg = fmt.Sprintf("Start downloading: %s %d\n", news.URL, news.CurrentSize)
+	case EventProgress:
+	case EventEnd:
+		msg = fmt.Sprintf("Finished downloading: %s\n", news.URL)
+	case EventAbort:
+		msg = fmt.Sprintf("Aborted: %s\n", news.URL)
+	default:
+		panic(fmt.Sprintf("unexpected main.Event: %#v\n", news.Event))
+	}
+
+	io.WriteString(p.w, msg)
 }

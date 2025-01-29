@@ -25,6 +25,7 @@ type News struct {
 	Event       Event
 	TotalSize   int64
 	CurrentSize int64
+	URL         string
 }
 
 type Task struct {
@@ -107,8 +108,6 @@ func (d *DownloadWorker) Run(ctx context.Context) Result {
 	b, ctx, cancel := d.policy.NewBackoff(ctx)
 	defer cancel()
 
-	fmt.Println(d.url)
-	d.pub.Publish(News{EventStart, 0, 0})
 	m := multierr.New()
 
 	for backoff.Continue(ctx, b) {
@@ -117,6 +116,13 @@ func (d *DownloadWorker) Run(ctx context.Context) Result {
 			m.Add(err)
 			continue
 		}
+
+		d.pub.Publish(News{
+			Event:       EventStart,
+			TotalSize:   max(0, resp.ContentLength),
+			CurrentSize: 0,
+			URL:         d.url,
+		})
 
 		// サーバーエラーはリトライを行う
 		if resp.StatusCode >= http.StatusInternalServerError {
@@ -132,7 +138,12 @@ func (d *DownloadWorker) Run(ctx context.Context) Result {
 		}
 		resp.Body.Close()
 
-		d.pub.Publish(News{EventEnd, resp.ContentLength, 100})
+		d.pub.Publish(News{
+			Event:       EventEnd,
+			TotalSize:   resp.ContentLength,
+			CurrentSize: int64(len(b)),
+			URL:         d.url,
+		})
 		return Result{b, nil}
 	}
 
