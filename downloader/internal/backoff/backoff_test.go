@@ -23,7 +23,7 @@ func TestPolicy_Next(t *testing.T) {
 			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
 			want:   10 * time.Millisecond,
 		},
-		"": {
+		"third retry": {
 			cnt:    3,
 			policy: &backoff.Policy{10 * time.Millisecond, 100 * time.Millisecond, time.Second, 10},
 			want:   40 * time.Millisecond,
