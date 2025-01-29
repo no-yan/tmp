@@ -6,3 +6,6 @@ test:
 
 build:
   go build -o a.out
+
+watch:
+  watchexec just
