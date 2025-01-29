@@ -7,11 +7,12 @@ import (
 )
 
 func slowServer(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%s: %s\n", time.Now(), r.URL)
 	data := []byte("This is a test of slow data transmission.\n")
 	for i := 0; i < 10; i++ {
 		w.Write(data)
 		w.(http.Flusher).Flush()
-		time.Sleep(1 * time.Second)
+		time.Sleep(200 * time.Millisecond)
 	}
 	fmt.Fprintln(w, "End of data.")
 }
