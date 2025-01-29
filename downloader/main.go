@@ -32,12 +32,10 @@ func main() {
 	pub.Register(NopSubscriber{}, progressBar)
 
 	tasks := NewTasks(args...)
-	printer := NewPrinter(os.Stdout, pub)
-	dc := NewDownloadController(tasks, &defaultPolicy, pub, printer)
+	dc := NewDownloadController(tasks, &defaultPolicy, pub)
+	c := dc.Run(ctx)
 
-	for result := range dc.Run(ctx) {
-		printer.Print(result.Body)
-	}
+	<-c
 }
 
 type Printer struct {

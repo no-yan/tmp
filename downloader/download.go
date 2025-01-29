@@ -47,28 +47,26 @@ func NewTasks(urls ...string) Tasks {
 }
 
 type DownloadController struct {
-	tasks   map[string]Task
-	policy  *backoff.Policy
-	pub     *pubsub.Publisher[News]
-	c       chan Result
-	sem     chan int
-	wg      *sync.WaitGroup
-	printer *Printer
+	tasks  map[string]Task
+	policy *backoff.Policy
+	pub    *pubsub.Publisher[News]
+	c      chan Result
+	sem    chan int
+	wg     *sync.WaitGroup
 }
 
-func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[News], printer *Printer) *DownloadController {
+func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[News]) *DownloadController {
 	c := make(chan Result)
 	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
 
 	return &DownloadController{
-		c:       c,
-		sem:     sem,
-		policy:  policy,
-		pub:     publisher,
-		wg:      &wg,
-		tasks:   tasks,
-		printer: printer,
+		c:      c,
+		sem:    sem,
+		policy: policy,
+		pub:    publisher,
+		wg:     &wg,
+		tasks:  tasks,
 	}
 }
 
