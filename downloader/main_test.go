@@ -91,7 +91,7 @@ func TestDownload(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testURL := ts.URL + tt.urlPath
 			pub := NewPublisher()
-			d := NewDownloader(testURL, &defaultPolicy, pub)
+			d := NewDownloadWorker(testURL, &defaultPolicy, pub)
 			result := d.Run()
 
 			if (result.Err != nil) != tt.expectErr {
