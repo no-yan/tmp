@@ -43,12 +43,12 @@ func print(r Result, pub *pubsub.Publisher[News]) {
 		return
 	}
 
-	_, err := io.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	r.Body.Close()
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Printf("Body: \n%s", string(b))
+	fmt.Printf("Body: \n%s", string(b))
 
 	pub.Publish(News{EventEnd, 100, 100})
 }
