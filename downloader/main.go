@@ -25,7 +25,8 @@ func main() {
 
 	fmt.Printf("URL: %s\n", args)
 
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	pub := pubsub.NewPublisher[News]()
 	progressBar := NewProgressBar(args[0], os.Stdout)
 	pub.Register(NopSubscriber{}, progressBar)
