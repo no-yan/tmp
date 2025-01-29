@@ -94,19 +94,10 @@ func TestDownload(t *testing.T) {
 			testURL := ts.URL + tt.urlPath
 			pub := pubsub.NewPublisher[News]()
 			d := NewDownloadWorker(testURL, &defaultPolicy, pub)
-			result := d.Run(context.Background())
+			err := d.Run(context.Background())
 
-			if (result.Err != nil) != tt.expectErr {
-				t.Fatalf("expected error: %v, got: %v", tt.expectErr, result.Err)
-			}
-			body := result.Body
-
-			if body != nil {
-				if string(body) != tt.expectBody {
-					t.Errorf("expected body: '%s', got: '%s'", tt.expectBody, string(body))
-				}
-			} else if tt.expectBody != "" {
-				t.Errorf("expected body: '%s', got nil", tt.expectBody)
+			if (err != nil) != tt.expectErr {
+				t.Fatalf("expected error: %v, got: %v", tt.expectErr, err)
 			}
 		})
 	}
