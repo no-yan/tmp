@@ -25,12 +25,14 @@ func main() {
 
 	fmt.Printf("URL: %s\n", args)
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	pub := pubsub.NewPublisher[News]()
 	progressBar := NewProgressBar(args[0], os.Stdout)
 	pub.Register(NopSubscriber{}, progressBar)
 
-	downloadChannel := downloadAll(ctx, args, &defaultPolicy, pub)
+	tasks := NewTasks(args...)
+	dc := NewDownloadController(tasks, &defaultPolicy, pub)
+	downloadChannel := dc.Run(ctx)
 
 	for result := range downloadChannel {
 		print(result, pub)

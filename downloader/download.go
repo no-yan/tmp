@@ -27,30 +27,70 @@ type News struct {
 	CurrentSize int64
 }
 
-func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, publisher *pubsub.Publisher[News]) chan Result {
+type Task struct {
+	url string
+}
+
+func NewTask(url string) *Task {
+	return &Task{url}
+}
+
+type Tasks map[string]Task
+
+func NewTasks(urls ...string) Tasks {
+	m := make(Tasks)
+
+	for _, url := range urls {
+		m[url] = *NewTask(url)
+	}
+	return m
+}
+
+type DownloadController struct {
+	tasks  map[string]Task
+	policy *backoff.Policy
+	pub    *pubsub.Publisher[News]
+	c      chan Result
+	sem    chan int
+	wg     *sync.WaitGroup
+}
+
+func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[News]) *DownloadController {
 	c := make(chan Result)
 	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
-	for _, url := range urls {
-		wg.Add(1)
+
+	return &DownloadController{
+		c:      c,
+		sem:    sem,
+		policy: policy,
+		pub:    publisher,
+		wg:     &wg,
+		tasks:  tasks,
+	}
+}
+
+func (dc *DownloadController) Run(ctx context.Context) chan Result {
+	for url := range dc.tasks {
+		dc.wg.Add(1)
 		go func(url string) {
-			defer wg.Done()
+			defer dc.wg.Done()
 
 			// semaphore
-			sem <- 1
-			defer func() { <-sem }()
+			dc.sem <- 1
+			defer func() { <-dc.sem }() // FIXME: Bodyのreadはセマフォでコントロールされていない
 
-			d := NewDownloadWorker(url, policy, publisher)
-			c <- d.Run(ctx)
+			d := NewDownloadWorker(url, dc.policy, dc.pub)
+			dc.c <- d.Run(ctx)
 		}(url)
 	}
 
 	go func() {
-		wg.Wait()
-		close(c)
+		dc.wg.Wait()
+		close(dc.c)
 	}()
 
-	return c
+	return dc.c
 }
 
 type DownloadWorker struct {
