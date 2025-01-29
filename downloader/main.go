@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -23,11 +24,12 @@ func main() {
 
 	fmt.Printf("URL: %s\n", args)
 
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	pub := NewPublisher()
 	progressBar := NewProgressBar(args[0], os.Stdout)
 	pub.Register(NopSubscriber{}, progressBar)
 
-	downloadChannel := downloadAll(args, &defaultPolicy, pub)
+	downloadChannel := downloadAll(ctx, args, &defaultPolicy, pub)
 
 	for result := range downloadChannel {
 		print(result, pub)

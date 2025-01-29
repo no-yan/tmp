@@ -11,15 +11,21 @@ import (
 	"github.com/no-yan/tmp/downloader/internal/backoff"
 )
 
-func downloadAll(urls []string, policy *backoff.Policy, publisher *Publisher) chan Result {
-	c := make(chan Result, 1)
+func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, publisher *Publisher) chan Result {
+	c := make(chan Result)
+	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
 	for _, url := range urls {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
+
+			// semaphore
+			sem <- 1
+			defer func() { <-sem }()
+
 			d := NewDownloadWorker(url, policy, publisher)
-			c <- d.Run()
+			c <- d.Run(ctx)
 		}(url)
 	}
 
@@ -41,10 +47,11 @@ func NewDownloadWorker(url string, policy *backoff.Policy, publisher *Publisher)
 	return &DownloadWorker{url: url, policy: policy, pub: publisher}
 }
 
-func (d *DownloadWorker) Run() Result {
-	b, ctx, cancel := d.policy.NewBackoff(context.Background())
+func (d *DownloadWorker) Run(ctx context.Context) Result {
+	b, ctx, cancel := d.policy.NewBackoff(ctx)
 	defer cancel()
 
+	fmt.Println(d.url)
 	d.pub.Publish(News{EventStart, 0, 0})
 	m := multierr.New()
 	for backoff.Continue(ctx, b) {
