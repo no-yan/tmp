@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"io"
 	"time"
 
@@ -20,8 +19,6 @@ var defaultPolicy = backoff.Policy{
 func main() {
 	flag.Parse()
 	args := flag.Args()
-
-	fmt.Printf("URL: %s\n", args)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
