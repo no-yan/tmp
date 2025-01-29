@@ -105,8 +105,7 @@ func NewDownloadWorker(url string, policy *backoff.Policy, publisher *pubsub.Pub
 }
 
 func (d *DownloadWorker) Run(ctx context.Context) Result {
-	b, ctx, cancel := d.policy.NewBackoff(ctx)
-	defer cancel()
+	b := d.policy.NewBackoff()
 
 	m := multierr.New()
 

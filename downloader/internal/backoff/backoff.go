@@ -8,7 +8,6 @@ import (
 type Policy struct {
 	DelayMin   time.Duration
 	DelayMax   time.Duration
-	Timeout    time.Duration
 	RetryLimit uint
 }
 
@@ -28,10 +27,8 @@ func (p Policy) Next(cnt uint) time.Duration {
 	}
 }
 
-func (p Policy) NewBackoff(c context.Context) (backoff *Backoff, ctx context.Context, cancelFunc func()) {
-	ctx, cancelFunc = context.WithTimeout(c, p.Timeout)
-	backoff = &Backoff{p, 0}
-	return
+func (p Policy) NewBackoff() *Backoff {
+	return &Backoff{p, 0}
 }
 
 type Backoff struct {
