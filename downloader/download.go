@@ -128,13 +128,13 @@ func (d *DownloadWorker) Run(ctx context.Context) Result {
 			continue
 		}
 
-		d.pub.Publish(News{EventStart, resp.ContentLength, 0})
-
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			panic(err)
 		}
 		resp.Body.Close()
+
+		d.pub.Publish(News{EventEnd, resp.ContentLength, 100})
 		return Result{b, nil}
 	}
 
