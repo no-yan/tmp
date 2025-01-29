@@ -9,6 +9,7 @@ import (
 
 	"github.com/no-yan/multierr"
 	"github.com/no-yan/tmp/downloader/internal/backoff"
+	"github.com/no-yan/tmp/downloader/internal/pubsub"
 )
 
 type Event int
@@ -26,7 +27,7 @@ type News struct {
 	CurrentSize int64
 }
 
-func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, publisher *Publisher[News]) chan Result {
+func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, publisher *pubsub.Publisher[News]) chan Result {
 	c := make(chan Result)
 	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
@@ -55,10 +56,10 @@ func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, pub
 type DownloadWorker struct {
 	url    string
 	policy *backoff.Policy
-	pub    *Publisher[News]
+	pub    *pubsub.Publisher[News]
 }
 
-func NewDownloadWorker(url string, policy *backoff.Policy, publisher *Publisher[News]) *DownloadWorker {
+func NewDownloadWorker(url string, policy *backoff.Policy, publisher *pubsub.Publisher[News]) *DownloadWorker {
 	return &DownloadWorker{url: url, policy: policy, pub: publisher}
 }
 
