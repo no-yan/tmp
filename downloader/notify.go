@@ -5,41 +5,26 @@ import (
 	"sync"
 )
 
-type Event int
-
-const (
-	EventStart Event = iota
-	EventProgress
-	EventEnd
-	EventAbort
-)
-
-type News struct {
-	Event       Event
-	TotalSize   int64
-	CurrentSize int64
+type Subscriber[T any] interface {
+	HandleEvent(event T)
 }
 
-type Subscriber interface {
-	HandleEvent(news News)
-}
-
-type Publisher struct {
+type Publisher[T any] struct {
 	mu  sync.Mutex
-	sub []Subscriber
+	sub []Subscriber[T]
 }
 
-func NewPublisher() *Publisher {
-	return &Publisher{}
+func NewPublisher[T any]() *Publisher[T] {
+	return &Publisher[T]{}
 }
 
-func (p *Publisher) Register(s ...Subscriber) {
+func (p *Publisher[T]) Register(s ...Subscriber[T]) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.sub = append(p.sub, s...)
 }
 
-func (p *Publisher) Cancel(s Subscriber) {
+func (p *Publisher[T]) Cancel(s Subscriber[T]) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if i := slices.Index(p.sub, s); i >= 0 {
@@ -47,12 +32,12 @@ func (p *Publisher) Cancel(s Subscriber) {
 	}
 }
 
-func (p *Publisher) Publish(news News) {
+func (p *Publisher[T]) Publish(event T) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	for _, obs := range p.sub {
-		obs.HandleEvent(news)
+		obs.HandleEvent(event)
 	}
 }
 

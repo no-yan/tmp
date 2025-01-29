@@ -11,7 +11,22 @@ import (
 	"github.com/no-yan/tmp/downloader/internal/backoff"
 )
 
-func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, publisher *Publisher) chan Result {
+type Event int
+
+const (
+	EventStart Event = iota
+	EventProgress
+	EventEnd
+	EventAbort
+)
+
+type News struct {
+	Event       Event
+	TotalSize   int64
+	CurrentSize int64
+}
+
+func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, publisher *Publisher[News]) chan Result {
 	c := make(chan Result)
 	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
@@ -40,10 +55,10 @@ func downloadAll(ctx context.Context, urls []string, policy *backoff.Policy, pub
 type DownloadWorker struct {
 	url    string
 	policy *backoff.Policy
-	pub    *Publisher
+	pub    *Publisher[News]
 }
 
-func NewDownloadWorker(url string, policy *backoff.Policy, publisher *Publisher) *DownloadWorker {
+func NewDownloadWorker(url string, policy *backoff.Policy, publisher *Publisher[News]) *DownloadWorker {
 	return &DownloadWorker{url: url, policy: policy, pub: publisher}
 }
 

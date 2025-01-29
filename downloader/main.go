@@ -25,7 +25,7 @@ func main() {
 	fmt.Printf("URL: %s\n", args)
 
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	pub := NewPublisher()
+	pub := NewPublisher[News]()
 	progressBar := NewProgressBar(args[0], os.Stdout)
 	pub.Register(NopSubscriber{}, progressBar)
 
@@ -36,7 +36,7 @@ func main() {
 	}
 }
 
-func print(r Result, pub *Publisher) {
+func print(r Result, pub *Publisher[News]) {
 	if r.Err != nil {
 		fmt.Printf("Error: %v\n", r.Err)
 		return
