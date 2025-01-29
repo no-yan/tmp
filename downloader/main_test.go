@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/no-yan/tmp/downloader/internal/pubsub"
 )
 
 func TestDownload(t *testing.T) {
@@ -90,20 +92,16 @@ func TestDownload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testURL := ts.URL + tt.urlPath
-			pub := NewPublisher()
+			pub := pubsub.NewPublisher[News]()
 			d := NewDownloadWorker(testURL, &defaultPolicy, pub)
-			result := d.Run()
+			result := d.Run(context.Background())
 
 			if (result.Err != nil) != tt.expectErr {
 				t.Fatalf("expected error: %v, got: %v", tt.expectErr, result.Err)
 			}
+			body := result.Body
 
-			if result.Body != nil {
-				defer result.Body.Close()
-				body, err := io.ReadAll(result.Body)
-				if err != nil {
-					t.Fatalf("failed to read body: %v", err)
-				}
+			if body != nil {
 				if string(body) != tt.expectBody {
 					t.Errorf("expected body: '%s', got: '%s'", tt.expectBody, string(body))
 				}
