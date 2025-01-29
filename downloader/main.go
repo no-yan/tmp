@@ -21,14 +21,16 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+
 	pub := pubsub.NewPublisher[News]()
-	progressBar := NewMultiProgressBar()
-	pub.Register(NopSubscriber{}, progressBar)
+	bar := NewMultiProgressBar()
+	nop := NopSubscriber{}
+	pub.Register(bar, nop)
 
 	tasks := NewTasks(args...)
 	dc := NewDownloadController(tasks, &defaultPolicy, pub)
 	c := dc.Run(ctx)
 	<-c
 
-	progressBar.Flush()
+	bar.Flush()
 }
