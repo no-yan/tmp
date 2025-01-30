@@ -94,7 +94,9 @@ func TestDownload(t *testing.T) {
 			testURL := ts.URL + tt.urlPath
 			pub := pubsub.NewPublisher[News]()
 			d := NewDownloadWorker(testURL, &defaultPolicy, pub)
-			err := d.Run(context.Background())
+			body, size, err := d.Run(context.Background())
+
+			if (body)
 
 			if (err != nil) != tt.expectErr {
 				t.Fatalf("expected error: %v, got: %v", tt.expectErr, err)

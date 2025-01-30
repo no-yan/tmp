@@ -82,7 +82,23 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			defer func() { <-dc.sem }()
 
 			d := NewDownloadWorker(url, dc.policy, dc.pub)
-			d.Run(ctx) // TODO: エラーハンドリング
+			body, size, err := d.Run(ctx) // TODO: エラーハンドリング
+			if err != nil {
+				panic(err)
+			}
+			defer body.Close()
+
+			b, err := io.ReadAll(body)
+			if err != nil {
+				panic(err)
+			}
+
+			d.pub.Publish(News{
+				Event:       EventEnd,
+				TotalSize:   int64(size),
+				CurrentSize: int64(len(b)),
+				URL:         d.url,
+			})
 		}(url)
 	}
 
@@ -104,7 +120,7 @@ func NewDownloadWorker(url string, policy *backoff.Policy, publisher *pubsub.Pub
 	return &DownloadWorker{url: url, policy: policy, pub: publisher}
 }
 
-func (d *DownloadWorker) Run(ctx context.Context) error {
+func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLength int, err error) {
 	b := d.policy.NewBackoff()
 
 	m := multierr.New()
@@ -131,20 +147,8 @@ func (d *DownloadWorker) Run(ctx context.Context) error {
 			continue
 		}
 
-		b, err := io.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-		resp.Body.Close()
-
-		d.pub.Publish(News{
-			Event:       EventEnd,
-			TotalSize:   resp.ContentLength,
-			CurrentSize: int64(len(b)),
-			URL:         d.url,
-		})
-		return nil
+		return resp.Body, int(resp.ContentLength), nil
 	}
 
-	return m.Err()
+	return nil, 0, m.Err()
 }

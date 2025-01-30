@@ -28,15 +28,17 @@ func (p *MultiProgressBar) Flush() {
 }
 
 func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
-	name := title
-	return p.p.New(int64(100),
-
+	// TODO: if content-size is unknown, let bar will be spinner.
+	return p.p.New(
+		int64(100),
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
 		mpb.BarFillerClearOnComplete(),
 		mpb.PrependDecorators(
-			decor.Name(name, decor.WC{C: decor.DindentRight | decor.DextraSpace}),
-			decor.Name("downloading", decor.WCSyncSpaceR),
-			decor.OnComplete(decor.Percentage(decor.WC{W: 5}), "done"),
+			decor.Name(title, decor.WC{C: decor.DindentRight | decor.DextraSpace}),
+			decor.OnComplete(
+				decor.Name("downloading", decor.WCSyncSpaceR),
+				"completed",
+			),
 		),
 		mpb.AppendDecorators(decor.Percentage()),
 	)
