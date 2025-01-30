@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/no-yan/tmp/downloader/internal/pubsub"
 )
 
@@ -92,14 +94,22 @@ func TestDownload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testURL := ts.URL + tt.urlPath
-			pub := pubsub.NewPublisher[News]()
+			pub := pubsub.NewPublisher[Event]()
 			d := NewDownloadWorker(testURL, &defaultPolicy, pub)
-			body, size, err := d.Run(context.Background())
-
-			if (body)
+			body, _, err := d.Run(context.Background())
 
 			if (err != nil) != tt.expectErr {
 				t.Fatalf("expected error: %v, got: %v", tt.expectErr, err)
+			}
+
+			if !tt.expectErr {
+				bodyByte, err := io.ReadAll(body)
+				if err != nil {
+					t.Fatalf("expected body: %s, got error: %v", tt.expectBody, err)
+				}
+				if diff := cmp.Diff(tt.expectBody, string(bodyByte)); diff != "" {
+					t.Errorf("downdload() mismatch: (-want, +got)\n%s", diff)
+				}
 			}
 		})
 	}
