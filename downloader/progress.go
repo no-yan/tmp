@@ -8,13 +8,12 @@ import (
 	"github.com/vbauerster/mpb/v8/decor"
 )
 
-type (
-	bars             map[string]*mpb.Bar
-	MultiProgressBar struct {
-		p    *mpb.Progress
-		bars bars
-	}
-)
+type bars map[string]*mpb.Bar
+
+type MultiProgressBar struct {
+	p    *mpb.Progress
+	bars bars
+}
 
 func NewMultiProgressBar() *MultiProgressBar {
 	p := mpb.New(mpb.WithWidth(64))
