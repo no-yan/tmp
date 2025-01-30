@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
 )
@@ -34,13 +36,18 @@ func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
 		mpb.BarFillerClearOnComplete(),
 		mpb.PrependDecorators(
-			decor.Name(title, decor.WC{C: decor.DindentRight | decor.DextraSpace}),
+			decor.Name(title, decor.WC{C: decor.DSyncWidthR | decor.DextraSpace}),
+			decor.OnAbort(
+				decor.OnComplete(
+					decor.Name("downloading", decor.WC{C: decor.DindentRight | decor.DextraSpace}),
+					"completed",
+				),
+				"aborted",
+			),
 			decor.OnComplete(
-				decor.Name("downloading", decor.WCSyncSpaceR),
-				"completed",
+				decor.Percentage(), "",
 			),
 		),
-		mpb.AppendDecorators(decor.Percentage()),
 	)
 }
 
@@ -62,6 +69,14 @@ func (p MultiProgressBar) HandleEvent(news News) {
 			panic("bar not found")
 		}
 		b.IncrBy(100)
+	case EventAbort:
+		b, ok := p.findBar(news.URL)
+		if !ok {
+			panic("bar not found")
+		}
+		b.Abort(false)
+	default:
+		panic(fmt.Sprintf("unexpected main.Event: %#v", news.Event))
 	}
 }
 
