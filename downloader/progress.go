@@ -54,7 +54,7 @@ func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 	)
 }
 
-func (p MultiProgressBar) HandleEvent(event Event) {
+func (p *MultiProgressBar) HandleEvent(event Event) {
 	switch e := event.(type) {
 	case EventStart:
 		bar := p.CreateBar(e.URL)
