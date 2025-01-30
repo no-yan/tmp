@@ -10,8 +10,8 @@ import (
 )
 
 var defaultPolicy = backoff.Policy{
-	DelayMin:   time.Millisecond,
-	DelayMax:   20 * time.Millisecond,
+	DelayMin:   100 * time.Millisecond,
+	DelayMax:   500 * time.Millisecond,
 	RetryLimit: 10,
 }
 
