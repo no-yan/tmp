@@ -2,4 +2,4 @@ package main
 
 type NopSubscriber struct{}
 
-func (n NopSubscriber) HandleEvent(event News) {}
+func (n NopSubscriber) HandleEvent(event Event) {}

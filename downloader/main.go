@@ -22,7 +22,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	pub := pubsub.NewPublisher[News]()
+	pub := pubsub.NewPublisher[Event]()
 	bar := NewMultiProgressBar()
 	nop := NopSubscriber{}
 	pub.Register(bar, nop)

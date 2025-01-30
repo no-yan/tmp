@@ -55,25 +55,25 @@ func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 	)
 }
 
-func (p MultiProgressBar) HandleEvent(news News) {
-	switch news.Event {
+func (p MultiProgressBar) HandleEvent(event Event) {
+	switch e := event.(type) {
 	case EventStart:
-		bar := p.CreateBar(news.URL)
-		p.bars[news.URL] = bar
+		bar := p.CreateBar(e.URL)
+		p.bars[e.URL] = bar
 	case EventProgress:
-		b := p.findBar(news.URL)
+		b := p.findBar(e.URL)
 		b.Increment()
 	case EventRetry:
-		b := p.findBar(news.URL)
+		b := p.findBar(e.URL)
 		b.SetCurrent(0)
 	case EventEnd:
-		b := p.findBar(news.URL)
+		b := p.findBar(e.URL)
 		b.IncrBy(100)
 	case EventAbort:
-		b := p.findBar(news.URL)
+		b := p.findBar(e.URL)
 		b.Abort(false)
 	default:
-		panic(fmt.Sprintf("unexpected main.Event: %#v", news.Event))
+		panic(fmt.Sprintf("unexpected main.Event: %#v", event.Type()))
 	}
 }
 
