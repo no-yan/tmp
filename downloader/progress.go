@@ -31,7 +31,7 @@ func (p *MultiProgressBar) Flush() {
 }
 
 func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
-	// TODO: if content-size is unknown, set the bar to a spinner.
+	// TODO: if content-size is unknown, let bar will be spinner.
 	return p.p.New(
 		int64(100),
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
