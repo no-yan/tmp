@@ -17,6 +17,7 @@ type Event int
 const (
 	EventStart Event = iota
 	EventProgress
+	EventRetry
 	EventEnd
 	EventAbort
 )
@@ -82,9 +83,15 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			defer func() { <-dc.sem }()
 
 			d := NewDownloadWorker(url, dc.policy, dc.pub)
-			body, size, err := d.Run(ctx) // TODO: エラーハンドリング
+			body, size, err := d.Run(ctx)
 			if err != nil {
-				panic(err)
+				dc.pub.Publish(News{
+					Event:       EventAbort,
+					TotalSize:   int64(size),
+					CurrentSize: int64(size),
+					URL:         d.url,
+				})
+				return
 			}
 			defer body.Close()
 
@@ -125,25 +132,39 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 
 	m := multierr.New()
 
+	d.pub.Publish(News{
+		Event:       EventStart,
+		TotalSize:   0,
+		CurrentSize: 0,
+		URL:         d.url,
+	})
+
 	for backoff.Continue(ctx, b) {
 		resp, err := http.Get(d.url)
 		if err != nil {
 			m.Add(err)
+
+			d.pub.Publish(News{
+				Event:       EventRetry,
+				TotalSize:   0,
+				CurrentSize: 0,
+				URL:         d.url,
+			})
 			continue
 		}
-
-		d.pub.Publish(News{
-			Event:       EventStart,
-			TotalSize:   max(0, resp.ContentLength),
-			CurrentSize: 0,
-			URL:         d.url,
-		})
 
 		// サーバーエラーはリトライを行う
 		if resp.StatusCode >= http.StatusInternalServerError {
 			body, _ := io.ReadAll(resp.Body)
 			err := fmt.Errorf("server error (%d): %s: %s", resp.StatusCode, d.url, body)
 			m.Add(err)
+
+			d.pub.Publish(News{
+				Event:       EventRetry,
+				TotalSize:   0,
+				CurrentSize: 0,
+				URL:         d.url,
+			})
 			continue
 		}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
@@ -34,7 +35,7 @@ func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 	return p.p.New(
 		int64(100),
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
-		mpb.BarFillerClearOnComplete(),
+		ClearBarFilerOnFinish(),
 		mpb.PrependDecorators(
 			decor.Name(title, decor.WC{C: decor.DSyncWidthR | decor.DextraSpace}),
 			decor.OnAbort(
@@ -44,8 +45,11 @@ func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 				),
 				"aborted",
 			),
-			decor.OnComplete(
-				decor.Percentage(), "",
+			decor.OnAbort(
+				decor.OnComplete(
+					decor.Percentage(), "",
+				),
+				"",
 			),
 		),
 	)
@@ -63,6 +67,12 @@ func (p MultiProgressBar) HandleEvent(news News) {
 			panic("bar not found")
 		}
 		b.Increment()
+	case EventRetry:
+		b, ok := p.findBar(news.URL)
+		if !ok {
+			panic("bar not found")
+		}
+		b.SetCurrent(0)
 	case EventEnd:
 		b, ok := p.findBar(news.URL)
 		if !ok {
@@ -83,4 +93,21 @@ func (p MultiProgressBar) HandleEvent(news News) {
 func (p *MultiProgressBar) findBar(url string) (bar *mpb.Bar, ok bool) {
 	bar, ok = p.bars[url]
 	return
+}
+
+func ClearBarFilerOnFinish() mpb.BarOption {
+	return barFilterOnFinish("")
+}
+
+func barFilterOnFinish(message string) mpb.BarOption {
+	return mpb.BarFillerMiddleware(func(base mpb.BarFiller) mpb.BarFiller {
+		return mpb.BarFillerFunc(func(w io.Writer, st decor.Statistics) error {
+			if st.Completed || st.Aborted {
+				_, err := io.WriteString(w, message)
+				return err
+			}
+
+			return base.Fill(w, st)
+		})
+	})
 }
