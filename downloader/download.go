@@ -134,7 +134,8 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 
 			b, err := io.ReadAll(body)
 			if err != nil {
-				panic(err)
+				dc.pub.Publish(EventAbort{URL: d.url})
+				return
 			}
 
 			d.pub.Publish(EventEnd{
