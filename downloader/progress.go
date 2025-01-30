@@ -31,7 +31,7 @@ func (p *MultiProgressBar) Flush() {
 }
 
 func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
-	// TODO: if content-size is unknown, let bar will be spinner.
+	// TODO: if content-size is unknown, set the bar to a spinner.
 	return p.p.New(
 		int64(100),
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
@@ -60,7 +60,6 @@ func (p MultiProgressBar) HandleEvent(news News) {
 	case EventStart:
 		bar := p.CreateBar(news.URL)
 		p.bars[news.URL] = bar
-
 	case EventProgress:
 		b := p.findBar(news.URL)
 		b.Increment()
