@@ -62,37 +62,28 @@ func (p MultiProgressBar) HandleEvent(news News) {
 		p.bars[news.URL] = bar
 
 	case EventProgress:
-		b, ok := p.findBar(news.URL)
-		if !ok {
-			panic("bar not found")
-		}
+		b := p.findBar(news.URL)
 		b.Increment()
 	case EventRetry:
-		b, ok := p.findBar(news.URL)
-		if !ok {
-			panic("bar not found")
-		}
+		b := p.findBar(news.URL)
 		b.SetCurrent(0)
 	case EventEnd:
-		b, ok := p.findBar(news.URL)
-		if !ok {
-			panic("bar not found")
-		}
+		b := p.findBar(news.URL)
 		b.IncrBy(100)
 	case EventAbort:
-		b, ok := p.findBar(news.URL)
-		if !ok {
-			panic("bar not found")
-		}
+		b := p.findBar(news.URL)
 		b.Abort(false)
 	default:
 		panic(fmt.Sprintf("unexpected main.Event: %#v", news.Event))
 	}
 }
 
-func (p *MultiProgressBar) findBar(url string) (bar *mpb.Bar, ok bool) {
-	bar, ok = p.bars[url]
-	return
+func (p *MultiProgressBar) findBar(url string) *mpb.Bar {
+	bar, ok := p.bars[url]
+	if !ok {
+		panic("bar not found")
+	}
+	return bar
 }
 
 func ClearBarFilerOnFinish() mpb.BarOption {
