@@ -195,7 +195,11 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 	})
 
 	for backoff.Continue(ctx, b) {
-		resp, err := http.Get(d.url)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, d.url, nil)
+		if err != nil {
+			return nil, 0, err
+		}
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			m.Add(err)
 
