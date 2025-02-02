@@ -146,25 +146,10 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			}
 			defer body.Close()
 
-			err = os.Mkdir("out", 0o777)
-			if err != nil && !os.IsExist(err) {
-				panic(err)
-			}
-
-			fName := createFileName(d.url)
-			path := filepath.Join(outDir, fName)
-
-			f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o777)
-			if err != nil {
-				d.pub.Publish(NewEventAbort(d.url, err))
-				return
-			}
-			defer f.Close()
-
-			tracker := NewProgressTracker(d.url, d.pub)
+			tracker := NewProgressTracker(url, d.pub)
 			r := io.TeeReader(body, tracker)
 
-			n, err := io.Copy(f, r)
+			n, err := SaveFile(r, d.url)
 			if err != nil {
 				dc.pub.Publish(NewEventAbort(d.url, err))
 				return
@@ -184,6 +169,24 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 	}()
 
 	return dc.c
+}
+
+func SaveFile(r io.Reader, url string) (int64, error) {
+	err := os.Mkdir("out", 0o777)
+	if err != nil && !os.IsExist(err) {
+		panic(err)
+	}
+
+	fName := createFileName(url)
+	path := filepath.Join(outDir, fName)
+
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o777)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+
+	return io.Copy(f, r)
 }
 
 type DownloadWorker struct {
