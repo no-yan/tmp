@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/no-yan/tmp/downloader/internal/backoff"
@@ -23,6 +24,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), config.timeout)
 	defer cancel()
 
+	ctx, stop := setupSignalContext(ctx)
+	defer stop()
+
 	pub := pubsub.NewPublisher[Event]()
 	bar := NewMultiProgressBar()
 	printer := NewResult(os.Stdout, config.outputDir)
@@ -37,4 +41,9 @@ func main() {
 
 	bar.Flush()
 	printer.Show()
+}
+
+func setupSignalContext(parent context.Context) (ctx context.Context, stop context.CancelFunc) {
+	ctx, stop = signal.NotifyContext(parent, os.Interrupt)
+	return
 }
