@@ -222,7 +222,7 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 		// サーバーエラーはリトライを行う
 		if resp.StatusCode >= http.StatusInternalServerError {
 			body, _ := io.ReadAll(resp.Body)
-			err := fmt.Errorf("server error (%d): %s: %s", resp.StatusCode, d.url, body)
+			err := fmt.Errorf("server error (%d):  %s", resp.StatusCode, body)
 			m.Add(err)
 
 			d.pub.Publish(EventRetry{
