@@ -28,8 +28,8 @@ func errorServer(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/error", errorServer)
-	http.HandleFunc("/fast", fastServer)
+	http.HandleFunc("/error/", errorServer)
+	http.HandleFunc("/fast/", fastServer)
 	http.HandleFunc("/", slowServer)
 	fmt.Println("Starting slow server on :8080")
 	http.ListenAndServe(":8080", nil)
