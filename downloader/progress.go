@@ -34,7 +34,7 @@ func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 	return p.p.New(
 		int64(100),
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
-		ClearBarFilerOnFinish(),
+		clearBarFilerOnFinish(),
 		mpb.PrependDecorators(
 			decor.Name(title, decor.WC{C: decor.DSyncWidthR | decor.DextraSpace}),
 			decor.OnAbort(
@@ -72,7 +72,7 @@ func (p *MultiProgressBar) HandleEvent(event Event) {
 		b := p.findBar(e.URL)
 		b.Abort(false)
 	default:
-		panic(fmt.Sprintf("unexpected main.Event: %#v", event.Type()))
+		panic(fmt.Sprintf("unexpected main.Event: %#v", e))
 	}
 }
 
@@ -84,7 +84,7 @@ func (p *MultiProgressBar) findBar(url string) *mpb.Bar {
 	return bar
 }
 
-func ClearBarFilerOnFinish() mpb.BarOption {
+func clearBarFilerOnFinish() mpb.BarOption {
 	return barFilterOnFinish("")
 }
 

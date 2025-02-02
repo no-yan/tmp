@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
 	"time"
 
 	"github.com/no-yan/tmp/downloader/internal/backoff"
@@ -10,10 +11,12 @@ import (
 )
 
 var defaultPolicy = backoff.Policy{
-	DelayMin:   100 * time.Millisecond,
-	DelayMax:   500 * time.Millisecond,
+	DelayMin:   10 * time.Millisecond,
+	DelayMax:   50 * time.Millisecond,
 	RetryLimit: 10,
 }
+
+const outDir = "out"
 
 func main() {
 	flag.Parse()
@@ -24,8 +27,9 @@ func main() {
 
 	pub := pubsub.NewPublisher[Event]()
 	bar := NewMultiProgressBar()
+	printer := NewResult(os.Stdout, outDir)
 	nop := NopSubscriber{}
-	pub.Register(bar, nop)
+	pub.Register(bar, nop, printer)
 
 	tasks := NewTasks(args...)
 	dc := NewDownloadController(tasks, &defaultPolicy, pub)
@@ -33,4 +37,5 @@ func main() {
 	<-c
 
 	bar.Flush()
+	printer.Show()
 }

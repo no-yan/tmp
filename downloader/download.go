@@ -71,6 +71,14 @@ func (e EventEnd) Type() EventType {
 
 type EventAbort struct {
 	URL string
+	Err error
+}
+
+func NewEventAbort(url string, err error) EventAbort {
+	return EventAbort{
+		URL: url,
+		Err: err,
+	}
 }
 
 func (e EventAbort) Type() EventType {
@@ -133,7 +141,7 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			d := NewDownloadWorker(url, dc.policy, dc.pub)
 			body, size, err := d.Run(ctx)
 			if err != nil {
-				dc.pub.Publish(EventAbort{URL: d.url})
+				dc.pub.Publish(NewEventAbort(d.url, err))
 				return
 			}
 			defer body.Close()
@@ -144,13 +152,11 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			}
 
 			fName := createFileName(d.url)
-			path := filepath.Join("out", fName)
+			path := filepath.Join(outDir, fName)
 
 			f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o777)
 			if err != nil {
-				d.pub.Publish(EventAbort{
-					URL: d.url,
-				})
+				d.pub.Publish(NewEventAbort(d.url, err))
 				return
 			}
 			defer f.Close()
@@ -160,7 +166,7 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 
 			n, err := io.Copy(f, r)
 			if err != nil {
-				dc.pub.Publish(EventAbort{URL: d.url})
+				dc.pub.Publish(NewEventAbort(d.url, err))
 				return
 			}
 
