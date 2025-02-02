@@ -54,15 +54,14 @@ func (b *Backoff) LimitExceeded() bool {
 }
 
 func Continue(ctx context.Context, b *Backoff) bool {
-	if b.LimitExceeded() {
-		return false
-	}
-
 	select {
 	case <-ctx.Done():
 		return false
 	case <-time.After(b.NextTick()):
 		b.cnt++
+		if b.LimitExceeded() {
+			return false
+		}
 		return true
 	}
 }
