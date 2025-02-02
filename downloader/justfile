@@ -9,3 +9,12 @@ build:
 
 watch:
   watchexec just
+
+perf: build
+  ./a.out http://localhost:8080/fast/1 http://localhost:8080/fast/2 http://localhost:8080/fast/3 http://localhost:8080/error http://localhost:8080/fast/50
+
+pprof target: build perf
+  go tool pprof ./a.out {{target}}.pprof
+
+pprof-web target: build perf
+  go tool pprof -http=:8082 ./a.out {{target}}.pprof
