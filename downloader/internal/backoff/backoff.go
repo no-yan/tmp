@@ -2,6 +2,7 @@ package backoff
 
 import (
 	"context"
+	"math/bits"
 	"time"
 )
 
@@ -16,6 +17,13 @@ func (p Policy) Next(cnt uint) time.Duration {
 		return 0
 	}
 
+	leadingZeros := bits.LeadingZeros(uint(p.DelayMin))
+	// time.Durationはint(2の補数表現)なので、
+	// 先頭1ビットは繰り上がりに 使用できない
+	leadingZeros--
+	if uint(leadingZeros) < cnt {
+		return p.DelayMax
+	}
 	delay := p.DelayMin << (cnt - 1)
 	switch {
 	case delay < p.DelayMin:
