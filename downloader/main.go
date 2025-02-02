@@ -32,7 +32,8 @@ func main() {
 	pub.Register(bar, nop, printer)
 
 	tasks := NewTasks(args...)
-	dc := NewDownloadController(tasks, &defaultPolicy, pub)
+	saver := NewFileSaver(outDir)
+	dc := NewDownloadController(tasks, &defaultPolicy, pub, saver)
 	c := dc.Run(ctx)
 	<-c
 

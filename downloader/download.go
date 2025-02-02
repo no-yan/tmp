@@ -2,13 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/no-yan/multierr"
@@ -104,6 +100,10 @@ func NewTasks(urls ...string) Tasks {
 	return m
 }
 
+type Saver interface {
+	Save(r io.Reader, url string) (int64, error)
+}
+
 type DownloadController struct {
 	tasks  map[string]Task
 	policy *backoff.Policy
@@ -111,9 +111,10 @@ type DownloadController struct {
 	c      chan bool
 	sem    chan int
 	wg     *sync.WaitGroup
+	saver  Saver
 }
 
-func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[Event]) *DownloadController {
+func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[Event], saver Saver) *DownloadController {
 	c := make(chan bool)
 	sem := make(chan int, 4)
 	wg := sync.WaitGroup{}
@@ -125,6 +126,7 @@ func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsu
 		pub:    publisher,
 		wg:     &wg,
 		tasks:  tasks,
+		saver:  saver,
 	}
 }
 
@@ -149,7 +151,7 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			tracker := NewProgressTracker(url, d.pub)
 			r := io.TeeReader(body, tracker)
 
-			n, err := SaveFile(r, d.url)
+			n, err := dc.saver.Save(r, d.url)
 			if err != nil {
 				dc.pub.Publish(NewEventAbort(d.url, err))
 				return
@@ -169,24 +171,6 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 	}()
 
 	return dc.c
-}
-
-func SaveFile(r io.Reader, url string) (int64, error) {
-	err := os.Mkdir("out", 0o777)
-	if err != nil && !os.IsExist(err) {
-		panic(err)
-	}
-
-	fName := createFileName(url)
-	path := filepath.Join(outDir, fName)
-
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o777)
-	if err != nil {
-		return 0, err
-	}
-	defer f.Close()
-
-	return io.Copy(f, r)
 }
 
 type DownloadWorker struct {
@@ -239,12 +223,6 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 	}
 
 	return nil, 0, m.Err()
-}
-
-func createFileName(url string) string {
-	b := sha256.Sum256([]byte(url))
-	hex := hex.EncodeToString(b[:])
-	return fmt.Sprintf("%s.log", hex)
 }
 
 type ProgressTracker struct {
