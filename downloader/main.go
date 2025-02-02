@@ -16,24 +16,22 @@ var defaultPolicy = backoff.Policy{
 	RetryLimit: 10,
 }
 
-const outDir = "out"
-
 func main() {
-	flag.Parse()
+	config := NewConfigFromFlags()
 	args := flag.Args()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.timeout)
 	defer cancel()
 
 	pub := pubsub.NewPublisher[Event]()
 	bar := NewMultiProgressBar()
-	printer := NewResult(os.Stdout, outDir)
+	printer := NewResult(os.Stdout, config.outputDir)
 	nop := NopSubscriber{}
 	pub.Register(bar, nop, printer)
 
 	tasks := NewTasks(args...)
-	saver := NewFileSaver(outDir)
-	dc := NewDownloadController(tasks, &defaultPolicy, pub, saver)
+	saver := NewFileSaver(config.outputDir)
+	dc := NewDownloadController(tasks, &defaultPolicy, pub, saver, config.workers)
 	c := dc.Run(ctx)
 	<-c
 

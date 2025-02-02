@@ -18,13 +18,13 @@ func NewFileSaver(dir string) *FileSaver {
 }
 
 func (fs FileSaver) Save(r io.Reader, url string) (int64, error) {
-	err := os.Mkdir(outDir, 0o644)
+	err := os.Mkdir(fs.dir, 0o644)
 	if err != nil && !os.IsExist(err) {
 		panic(err)
 	}
 
 	fName := fs.createFileName(url)
-	path := filepath.Join(outDir, fName)
+	path := filepath.Join(fs.dir, fName)
 
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o777)
 	if err != nil {
