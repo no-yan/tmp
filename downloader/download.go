@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/no-yan/multierr"
@@ -37,7 +41,9 @@ func (e EventStart) Type() EventType {
 }
 
 type EventProgress struct {
-	URL string
+	URL     string
+	Current int64
+	Total   int64
 }
 
 func (e EventProgress) Type() EventType {
@@ -132,15 +138,36 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			}
 			defer body.Close()
 
-			b, err := io.ReadAll(body)
+			err = os.Mkdir("out", 0o777)
+			if err != nil && !os.IsExist(err) {
+				panic(err)
+			}
+
+			fName := createFileName(d.url)
+			path := filepath.Join("out", fName)
+
+			f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o777)
+			if err != nil {
+				d.pub.Publish(EventAbort{
+					URL: d.url,
+				})
+				return
+			}
+			defer f.Close()
+
+			tracker := NewProgressTracker(d.url, d.pub)
+			r := io.TeeReader(body, tracker)
+
+			n, err := io.Copy(f, r)
 			if err != nil {
 				dc.pub.Publish(EventAbort{URL: d.url})
+				panic(err)
 				return
 			}
 
 			d.pub.Publish(EventEnd{
 				TotalSize:   int64(size),
-				CurrentSize: int64(len(b)),
+				CurrentSize: n,
 				URL:         d.url,
 			})
 		}(url)
@@ -204,4 +231,34 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 	}
 
 	return nil, 0, m.Err()
+}
+
+func createFileName(url string) string {
+	b := sha256.Sum256([]byte(url))
+	hex := hex.EncodeToString(b[:])
+	return fmt.Sprintf("%s.log", hex)
+}
+
+type ProgressTracker struct {
+	total int64
+	url   string
+	size  int64
+	pub   *pubsub.Publisher[Event]
+}
+
+func NewProgressTracker(url string, pub *pubsub.Publisher[Event]) *ProgressTracker {
+	return &ProgressTracker{
+		total: 0,
+		url:   url,
+		size:  0,
+		pub:   pub,
+	}
+}
+
+func (p *ProgressTracker) Write(data []byte) (int, error) {
+	n := len(data)
+	p.size += int64(n)
+
+	p.pub.Publish(EventProgress{URL: p.url, Current: p.size, Total: p.total})
+	return n, nil
 }
