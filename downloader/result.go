@@ -17,6 +17,7 @@ type Result struct {
 	Success int
 	Abort   int
 	URLS    res
+	tmpl    *template.Template
 }
 
 // HandleEvent implements pubsub.Subscriber.
@@ -35,8 +36,21 @@ func (r *Result) HandleEvent(event Event) {
 	}
 }
 
+const format = `
+Stored {{.Success}} files to {{.Out}}.
+{{ if .Abort }}Aborted {{ .Abort }} urls:
+Error: {{ range $key, $err := .URLS }} 
+	- {{$key}}: {{ PrettyError $err }}
+{{ end }}{{- end}}`
+
 func NewResult(w io.Writer, outDir string) *Result {
 	outDir, _ = filepath.Abs(outDir)
+	tmpl, err := template.New("test").
+		Funcs(template.FuncMap{"PrettyError": PrettyError}).
+		Parse(format)
+	if err != nil {
+		panic(err)
+	}
 
 	return &Result{
 		w:       w,
@@ -44,15 +58,9 @@ func NewResult(w io.Writer, outDir string) *Result {
 		URLS:    make(res),
 		Success: 0,
 		Abort:   0,
+		tmpl:    tmpl,
 	}
 }
-
-const format = `
-Stored {{.Success}} files to {{.Out}}.
-{{ if .Abort }}Aborted {{ .Abort }} urls:
-Error: {{ range $key, $err := .URLS }} 
-	- {{$key}}: {{ PrettyError $err }}
-{{ end }}{{- end}}`
 
 // Stored $n files to $out.
 // Aborted $url:
@@ -61,14 +69,7 @@ Error: {{ range $key, $err := .URLS }}
 //   - url1: $error1
 //   - url2: $error2
 func (r *Result) Show() {
-	tmpl, err := template.New("test").
-		Funcs(template.FuncMap{"PrettyError": PrettyError}).
-		Parse(format)
-	if err != nil {
-		panic(err)
-	}
-
-	tmpl.Execute(os.Stdout, r)
+	r.tmpl.Execute(os.Stdout, r)
 }
 
 func PrettyError(e error) string {
