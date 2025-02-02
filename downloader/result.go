@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
@@ -35,6 +36,8 @@ func (r *Result) HandleEvent(event Event) {
 }
 
 func NewResult(w io.Writer, outDir string) *Result {
+	outDir, _ = filepath.Abs(outDir)
+
 	return &Result{
 		w:       w,
 		Out:     outDir,
