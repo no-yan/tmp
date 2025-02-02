@@ -61,10 +61,10 @@ func (p *MultiProgressBar) HandleEvent(event Event) {
 		p.bars[e.URL] = bar
 	case EventProgress:
 		b := p.findBar(e.URL)
-		b.SetCurrent(e.Current)
 		if e.Total > 0 {
 			b.SetTotal(e.Total, false)
 		}
+		b.SetCurrent(e.Current)
 	case EventRetry:
 		b := p.findBar(e.URL)
 		b.SetCurrent(0)
