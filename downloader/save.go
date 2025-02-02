@@ -18,7 +18,7 @@ func NewFileSaver(dir string) *FileSaver {
 }
 
 func (fs FileSaver) Save(r io.Reader, url string) (int64, error) {
-	err := os.Mkdir(fs.dir, 0o644)
+	err := os.Mkdir(fs.dir, 0o755)
 	if err != nil && !os.IsExist(err) {
 		panic(err)
 	}
