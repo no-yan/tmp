@@ -116,7 +116,7 @@ type DownloadController struct {
 
 func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[Event], saver Saver, maxWorkers uint) *DownloadController {
 	c := make(chan bool)
-	sem := make(chan int, 4)
+	sem := make(chan int, maxWorkers)
 	wg := sync.WaitGroup{}
 
 	return &DownloadController{
