@@ -161,7 +161,6 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			n, err := io.Copy(f, r)
 			if err != nil {
 				dc.pub.Publish(EventAbort{URL: d.url})
-				panic(err)
 				return
 			}
 
