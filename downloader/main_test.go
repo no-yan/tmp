@@ -13,38 +13,7 @@ import (
 )
 
 func TestDownload(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// リクエストのパスに応じてレスポンスを返す
-		switch r.URL.Path {
-		case "/success":
-			fmt.Fprint(w, "success")
-		case "/fail":
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "error")
-		case "/retry":
-			// リトライ回数に応じて挙動を変える
-			if r.URL.Query().Get("count") == "0" {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprint(w, "error")
-			} else {
-				fmt.Fprint(w, "success after retry")
-			}
-		case "/retry_edge":
-			// リトライ回数のエッジケース
-			if r.URL.Query().Get("count") == "2" { // RetryLimit - 1
-				fmt.Fprint(w, "success at retry limit - 1")
-			} else if r.URL.Query().Get("count") == "3" { // RetryLimit
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprint(w, "error at retry limit")
-			} else {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprint(w, "error")
-			}
-		default:
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "not found")
-		}
-	}))
+	ts := setupServer(t)
 	defer ts.Close()
 
 	tests := []struct {
@@ -113,4 +82,41 @@ func TestDownload(t *testing.T) {
 			}
 		})
 	}
+}
+func setupServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのパスに応じてレスポンスを返す
+		switch r.URL.Path {
+		case "/success":
+			fmt.Fprint(w, "success")
+		case "/fail":
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "error")
+		case "/retry":
+			// リトライ回数に応じて挙動を変える
+			if r.URL.Query().Get("count") == "0" {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, "error")
+			} else {
+				fmt.Fprint(w, "success after retry")
+			}
+		case "/retry_edge":
+			// リトライ回数のエッジケース
+			if r.URL.Query().Get("count") == "2" { // RetryLimit - 1
+				fmt.Fprint(w, "success at retry limit - 1")
+			} else if r.URL.Query().Get("count") == "3" { // RetryLimit
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, "error at retry limit")
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, "error")
+			}
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "not found")
+		}
+	}))
+
+	return ts
 }
