@@ -26,7 +26,7 @@ func (fs FileSaver) Save(r io.Reader, url string) (int64, error) {
 	fName := fs.createFileName(url)
 	path := filepath.Join(fs.dir, fName)
 
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o777)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o644)
 	if err != nil {
 		return 0, err
 	}
