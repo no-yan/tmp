@@ -68,7 +68,7 @@ func NewPrinter(w io.Writer, outDir string) *Printer {
 // Error:
 //   - url1: $error1
 //   - url2: $error2
-func (r *Printer) Show() {
+func (r *Printer) Print() {
 	r.tmpl.Execute(os.Stdout, r)
 }
 

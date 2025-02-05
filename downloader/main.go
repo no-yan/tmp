@@ -40,7 +40,7 @@ func main() {
 	<-c
 
 	bar.Flush()
-	printer.Show()
+	printer.Print()
 }
 
 func setupSignalContext(parent context.Context) (ctx context.Context, stop context.CancelFunc) {
