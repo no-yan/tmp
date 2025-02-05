@@ -4,6 +4,7 @@ run: build
 test:
     go test ./...
 
+alias b := build
 build:
     go build -o a.out
 
