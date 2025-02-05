@@ -29,7 +29,7 @@ func main() {
 
 	pub := pubsub.NewPublisher[Event]()
 	bar := NewMultiProgressBar()
-	printer := NewResult(os.Stdout, config.outputDir)
+	printer := NewPrinter(os.Stdout, config.outputDir)
 	nop := NopSubscriber{}
 	pub.Register(bar, nop, printer)
 

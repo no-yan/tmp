@@ -11,7 +11,7 @@ import (
 
 type res map[string]error
 
-type Result struct {
+type Printer struct {
 	w       io.Writer
 	Out     string
 	Success int
@@ -21,16 +21,16 @@ type Result struct {
 }
 
 // HandleEvent implements pubsub.Subscriber.
-func (r *Result) HandleEvent(event Event) {
+func (p *Printer) HandleEvent(event Event) {
 	switch e := event.(type) {
 	case EventStart:
 	case EventProgress:
 	case EventEnd:
-		r.Success++
+		p.Success++
 	case EventRetry:
 	case EventAbort:
-		r.URLS[e.URL] = e.Err
-		r.Abort++
+		p.URLS[e.URL] = e.Err
+		p.Abort++
 	default:
 		panic(fmt.Sprintf("unexpected main.Event: %#v", event))
 	}
@@ -43,16 +43,16 @@ Error: {{ range $key, $err := .URLS }}
 	- {{$key}}: {{ PrettyError $err }}
 {{ end }}{{- end}}`
 
-func NewResult(w io.Writer, outDir string) *Result {
+func NewPrinter(w io.Writer, outDir string) *Printer {
 	outDir, _ = filepath.Abs(outDir)
 	tmpl, err := template.New("test").
-		Funcs(template.FuncMap{"PrettyError": PrettyError}).
+		Funcs(template.FuncMap{"PrettyError": prettyError}).
 		Parse(format)
 	if err != nil {
 		panic(err)
 	}
 
-	return &Result{
+	return &Printer{
 		w:       w,
 		Out:     outDir,
 		URLS:    make(res),
@@ -68,11 +68,11 @@ func NewResult(w io.Writer, outDir string) *Result {
 // Error:
 //   - url1: $error1
 //   - url2: $error2
-func (r *Result) Show() {
+func (r *Printer) Show() {
 	r.tmpl.Execute(os.Stdout, r)
 }
 
-func PrettyError(e error) string {
+func prettyError(e error) string {
 	str := e.Error()
 	deduped := make(map[string]bool)
 
