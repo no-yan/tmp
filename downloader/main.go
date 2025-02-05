@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"os"
 	"os/signal"
 	"time"
@@ -19,7 +18,6 @@ var defaultPolicy = backoff.Policy{
 
 func main() {
 	config := NewConfigFromFlags()
-	args := flag.Args()
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.timeout)
 	defer cancel()
@@ -32,9 +30,8 @@ func main() {
 	printer := NewPrinter(os.Stdout, config.outputDir)
 	pub.Register(bar, printer)
 
-	tasks := NewTasks(args...)
 	saver := NewFileSaver(config.outputDir)
-	dc := NewDownloadController(tasks, &defaultPolicy, pub, saver, config.workers)
+	dc := NewDownloadController(config.tasks, &defaultPolicy, pub, saver, config.workers)
 	c := dc.Run(ctx)
 	<-c
 
