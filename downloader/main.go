@@ -30,8 +30,7 @@ func main() {
 	pub := pubsub.NewPublisher[Event]()
 	bar := NewMultiProgressBar()
 	printer := NewPrinter(os.Stdout, config.outputDir)
-	nop := NopSubscriber{}
-	pub.Register(bar, nop, printer)
+	pub.Register(bar, printer)
 
 	tasks := NewTasks(args...)
 	saver := NewFileSaver(config.outputDir)
