@@ -232,25 +232,24 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 }
 
 type ProgressTracker struct {
-	total int64
-	url   string
-	size  int64
-	pub   *pubsub.Publisher[Event]
+	current, total int64
+	url            string
+	pub            *pubsub.Publisher[Event]
 }
 
 func NewProgressTracker(url string, pub *pubsub.Publisher[Event], total int64) *ProgressTracker {
 	return &ProgressTracker{
-		total: total,
-		url:   url,
-		size:  0,
-		pub:   pub,
+		current: 0,
+		total:   total,
+		url:     url,
+		pub:     pub,
 	}
 }
 
 func (p *ProgressTracker) Write(data []byte) (int, error) {
 	n := len(data)
-	p.size += int64(n)
+	p.current += int64(n)
 
-	p.pub.Publish(EventProgress{URL: p.url, Current: p.size, Total: p.total})
+	p.pub.Publish(EventProgress{Current: p.current, Total: p.total, URL: p.url})
 	return n, nil
 }
