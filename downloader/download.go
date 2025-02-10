@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/no-yan/multierr"
@@ -143,7 +144,7 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 			d := NewDownloadWorker(url, dc.policy, dc.pub)
 			body, size, err := d.Run(ctx)
 			if err != nil {
-				dc.pub.Publish(NewEventAbort(d.url, err))
+				dc.pub.PublishWithContext(ctx, NewEventAbort(d.url, err))
 				return
 			}
 			defer body.Close()
@@ -153,11 +154,11 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 
 			n, err := dc.saver.Save(r, d.url)
 			if err != nil {
-				dc.pub.Publish(NewEventAbort(d.url, err))
+				dc.pub.PublishWithContext(ctx, NewEventAbort(d.url, err))
 				return
 			}
 
-			d.pub.Publish(EventEnd{
+			d.pub.PublishWithContext(ctx, EventEnd{
 				TotalSize:   int64(size),
 				CurrentSize: n,
 				URL:         d.url,
@@ -188,7 +189,7 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 
 	m := multierr.New()
 
-	d.pub.Publish(EventStart{
+	d.pub.PublishWithContext(ctx, EventStart{
 		TotalSize:   0,
 		CurrentSize: 0,
 		URL:         d.url,
@@ -203,7 +204,7 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 		if err != nil {
 			m.Add(err)
 
-			d.pub.Publish(EventRetry{
+			d.pub.PublishWithContext(ctx, EventRetry{
 				TotalSize: 0,
 				URL:       d.url,
 			})
@@ -218,7 +219,7 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 			err := fmt.Errorf("server error (%d):  %s", resp.StatusCode, body)
 			m.Add(err)
 
-			d.pub.Publish(EventRetry{
+			d.pub.PublishWithContext(ctx, EventRetry{
 				TotalSize: 0,
 				URL:       d.url,
 			})

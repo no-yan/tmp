@@ -1,6 +1,7 @@
 package pubsub
 
 import (
+	"context"
 	"slices"
 	"sync"
 )
@@ -37,6 +38,18 @@ func (p *Publisher[T]) Publish(event T) {
 	defer p.mu.Unlock()
 
 	for _, obs := range p.sub {
+		obs.HandleEvent(event)
+	}
+}
+
+func (p *Publisher[T]) PublishWithContext(ctx context.Context, event T) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for _, obs := range p.sub {
+		if err := ctx.Err(); err != nil {
+			return
+		}
 		obs.HandleEvent(event)
 	}
 }
