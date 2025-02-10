@@ -34,11 +34,13 @@ func (p *Publisher[T]) Cancel(s Subscriber[T]) {
 }
 
 func (p *Publisher[T]) Publish(event T) {
+	subsCopy := make([]Subscriber[T], len(p.sub))
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	copy(subsCopy, p.sub)
+	p.mu.Unlock()
 
-	for _, obs := range p.sub {
-		obs.HandleEvent(event)
+	for _, sub := range subsCopy {
+		sub.HandleEvent(event)
 	}
 }
 
