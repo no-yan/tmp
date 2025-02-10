@@ -76,8 +76,7 @@ func (dc *DownloadController) Run(ctx context.Context) {
 				return
 			}
 			defer body.Close()
-
-			<-dc.sem
+			defer func() { <-dc.sem }()
 
 			tracker := NewProgressTracker(url, d.pub, int64(size))
 			r := io.TeeReader(body, tracker)
