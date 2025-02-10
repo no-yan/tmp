@@ -80,7 +80,7 @@ func (p *MultiProgressBar) HandleEvent(event Event) {
 		b.SetCurrent(0)
 	case EventEnd:
 		b := p.findBar(e.URL)
-		b.IncrBy(100)
+		b.SetCurrent(e.CurrentSize)
 	case EventAbort:
 		b := p.findBar(e.URL)
 		b.Abort(false)
