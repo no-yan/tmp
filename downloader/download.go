@@ -109,19 +109,16 @@ type DownloadController struct {
 	tasks  map[string]Task
 	policy *backoff.Policy
 	pub    *pubsub.Publisher[Event]
-	c      chan bool
 	sem    chan int
 	wg     *sync.WaitGroup
 	saver  Saver
 }
 
 func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsub.Publisher[Event], saver Saver, maxWorkers uint) *DownloadController {
-	c := make(chan bool)
 	sem := make(chan int, maxWorkers)
 	wg := sync.WaitGroup{}
 
 	return &DownloadController{
-		c:      c,
 		sem:    sem,
 		policy: policy,
 		pub:    publisher,
@@ -131,7 +128,7 @@ func NewDownloadController(tasks Tasks, policy *backoff.Policy, publisher *pubsu
 	}
 }
 
-func (dc *DownloadController) Run(ctx context.Context) chan bool {
+func (dc *DownloadController) Run(ctx context.Context) {
 	for url := range dc.tasks {
 		dc.wg.Add(1)
 		go func(url string) {
@@ -139,15 +136,17 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 
 			// semaphore
 			dc.sem <- 1
-			defer func() { <-dc.sem }()
 
 			d := NewDownloadWorker(url, dc.policy, dc.pub)
 			body, size, err := d.Run(ctx)
 			if err != nil {
+				<-dc.sem
 				dc.pub.PublishWithContext(ctx, NewEventAbort(d.url, err))
 				return
 			}
 			defer body.Close()
+
+			<-dc.sem
 
 			tracker := NewProgressTracker(url, d.pub)
 			r := io.TeeReader(body, tracker)
@@ -166,12 +165,7 @@ func (dc *DownloadController) Run(ctx context.Context) chan bool {
 		}(url)
 	}
 
-	go func() {
-		dc.wg.Wait()
-		close(dc.c)
-	}()
-
-	return dc.c
+	dc.wg.Wait()
 }
 
 type DownloadWorker struct {

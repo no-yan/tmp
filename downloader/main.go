@@ -32,8 +32,7 @@ func main() {
 
 	saver := NewFileSaver(config.outputDir)
 	dc := NewDownloadController(config.tasks, &defaultPolicy, pub, saver, config.workers)
-	c := dc.Run(ctx)
-	<-c
+	dc.Run(ctx)
 
 	bar.Flush()
 	printer.Print()
