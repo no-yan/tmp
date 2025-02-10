@@ -26,19 +26,6 @@ func NewMultiProgressBar(ctx context.Context) *MultiProgressBar {
 	}
 }
 
-func (p *MultiProgressBar) Flush() {
-	p.p.Wait()
-	p.clear()
-}
-
-func (p *MultiProgressBar) clear() {
-	linesToDelete := len(p.bars)
-
-	for range linesToDelete {
-		fmt.Printf("\033[F\033[K")
-	}
-}
-
 func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 	// TODO: if content-size is unknown, let bar will be spinner.
 	return p.p.New(
@@ -62,6 +49,23 @@ func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 			),
 		),
 	)
+}
+
+func clearBarFillerOnFinish() mpb.BarOption {
+	return barFilterOnFinish("")
+}
+
+func barFilterOnFinish(message string) mpb.BarOption {
+	return mpb.BarFillerMiddleware(func(base mpb.BarFiller) mpb.BarFiller {
+		return mpb.BarFillerFunc(func(w io.Writer, st decor.Statistics) error {
+			if st.Completed || st.Aborted {
+				_, err := io.WriteString(w, message)
+				return err
+			}
+
+			return base.Fill(w, st)
+		})
+	})
 }
 
 func (p *MultiProgressBar) HandleEvent(event Event) {
@@ -97,19 +101,15 @@ func (p *MultiProgressBar) findBar(url string) *mpb.Bar {
 	return bar
 }
 
-func clearBarFillerOnFinish() mpb.BarOption {
-	return barFilterOnFinish("")
+func (p *MultiProgressBar) Flush() {
+	p.p.Wait()
+	p.clear()
 }
 
-func barFilterOnFinish(message string) mpb.BarOption {
-	return mpb.BarFillerMiddleware(func(base mpb.BarFiller) mpb.BarFiller {
-		return mpb.BarFillerFunc(func(w io.Writer, st decor.Statistics) error {
-			if st.Completed || st.Aborted {
-				_, err := io.WriteString(w, message)
-				return err
-			}
+func (p *MultiProgressBar) clear() {
+	linesToDelete := len(p.bars)
 
-			return base.Fill(w, st)
-		})
-	})
+	for range linesToDelete {
+		fmt.Printf("\033[F\033[K")
+	}
 }
