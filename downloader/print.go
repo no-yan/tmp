@@ -36,8 +36,7 @@ func (p *Printer) HandleEvent(event Event) {
 	}
 }
 
-const format = `
-Stored {{.Success}} files to {{.Out}}.
+const format = `Stored {{.Success}} files to {{.Out}}.
 {{ if .Abort }}Aborted {{ .Abort }} urls:
 Error: {{ range $key, $err := .URLS }} 
 	- {{$key}}: {{ PrettyError $err }}
