@@ -26,7 +26,7 @@ func main() {
 	defer stop()
 
 	pub := pubsub.NewPublisher[Event]()
-	bar := NewMultiProgressBar()
+	bar := NewMultiProgressBar(ctx)
 	printer := NewPrinter(os.Stdout, config.outputDir)
 	pub.Register(bar, printer)
 

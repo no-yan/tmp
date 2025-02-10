@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -15,8 +16,8 @@ type MultiProgressBar struct {
 	bars bars
 }
 
-func NewMultiProgressBar() *MultiProgressBar {
-	p := mpb.New(mpb.WithWidth(64))
+func NewMultiProgressBar(ctx context.Context) *MultiProgressBar {
+	p := mpb.NewWithContext(ctx, mpb.WithWidth(64))
 	bars := make(bars)
 
 	return &MultiProgressBar{
