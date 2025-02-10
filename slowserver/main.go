@@ -13,6 +13,7 @@ func fastServer(w http.ResponseWriter, r *http.Request) {
 
 func slowServer(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%s: %s\n", time.Now(), r.URL)
+	w.Header().Set("Content-Length", "433")
 	data := []byte("This is a test of slow data transmission.\n")
 	for i := 0; i < 10; i++ {
 		w.Write(data)
@@ -28,7 +29,7 @@ func errorServer(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/error/", errorServer)
+	http.HandleFunc("/error", errorServer)
 	http.HandleFunc("/fast/", fastServer)
 	http.HandleFunc("/", slowServer)
 	fmt.Println("Starting slow server on :8080")
