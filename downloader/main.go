@@ -30,7 +30,7 @@ func main() {
 	printer := NewPrinter(os.Stdout, config.outputDir)
 	pub.Register(bar, printer)
 
-	saver := NewFileSaver(config.outputDir)
+	saver := NewFileSaver(config.outputDir, NewOSFS())
 	dc := NewDownloadController(config.tasks, &defaultPolicy, pub, saver, config.workers)
 	dc.Run(ctx)
 

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -14,10 +15,35 @@ type FileSaver struct {
 	dir  string
 	once *sync.Once
 	err  error
+	fs   FileSystem
 }
 
-func NewFileSaver(dir string) *FileSaver {
-	return &FileSaver{dir: dir, once: &sync.Once{}}
+type FileSystem interface {
+	OpenFile(name string, flag int, perm fs.FileMode) (*os.File, error)
+	MkdirAll(path string, perm fs.FileMode) error
+	IsExist(err error) bool
+}
+
+type osfs struct{}
+
+func NewOSFS() osfs {
+	return osfs{}
+}
+
+func (o osfs) OpenFile(name string, flag int, perm fs.FileMode) (*os.File, error) {
+	return os.OpenFile(name, flag, perm)
+}
+
+func (o osfs) MkdirAll(path string, perm fs.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+func (o osfs) IsExist(err error) bool {
+	return os.IsExist(err)
+}
+
+func NewFileSaver(dir string, fs FileSystem) *FileSaver {
+	return &FileSaver{dir: dir, once: &sync.Once{}, err: nil, fs: fs}
 }
 
 func (fs FileSaver) Save(r io.Reader, url string) (int64, error) {
