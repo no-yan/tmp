@@ -28,6 +28,15 @@ func NewMultiProgressBar(ctx context.Context) *MultiProgressBar {
 
 func (p *MultiProgressBar) Flush() {
 	p.p.Wait()
+	p.clear()
+}
+
+func (p *MultiProgressBar) clear() {
+	linesToDelete := len(p.bars)
+
+	for range linesToDelete {
+		fmt.Printf("\033[F\033[K")
+	}
 }
 
 func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
