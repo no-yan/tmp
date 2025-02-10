@@ -42,7 +42,7 @@ func (p *MultiProgressBar) clear() {
 func (p *MultiProgressBar) CreateBar(title string) *mpb.Bar {
 	// TODO: if content-size is unknown, let bar will be spinner.
 	return p.p.New(
-		int64(100),
+		int64(0),
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
 		clearBarFillerOnFinish(),
 		mpb.PrependDecorators(
@@ -80,7 +80,7 @@ func (p *MultiProgressBar) HandleEvent(event Event) {
 		b.SetCurrent(0)
 	case EventEnd:
 		b := p.findBar(e.URL)
-		b.SetCurrent(e.CurrentSize)
+		b.EnableTriggerComplete()
 	case EventAbort:
 		b := p.findBar(e.URL)
 		b.Abort(false)
