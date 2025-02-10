@@ -148,7 +148,7 @@ func (dc *DownloadController) Run(ctx context.Context) {
 
 			<-dc.sem
 
-			tracker := NewProgressTracker(url, d.pub)
+			tracker := NewProgressTracker(url, d.pub, int64(size))
 			r := io.TeeReader(body, tracker)
 
 			n, err := dc.saver.Save(r, d.url)
@@ -238,9 +238,9 @@ type ProgressTracker struct {
 	pub   *pubsub.Publisher[Event]
 }
 
-func NewProgressTracker(url string, pub *pubsub.Publisher[Event]) *ProgressTracker {
+func NewProgressTracker(url string, pub *pubsub.Publisher[Event], total int64) *ProgressTracker {
 	return &ProgressTracker{
-		total: 0,
+		total: total,
 		url:   url,
 		size:  0,
 		pub:   pub,
