@@ -229,7 +229,12 @@ func (d *DownloadWorker) Run(ctx context.Context) (body io.ReadCloser, contentLe
 		return resp.Body, int(resp.ContentLength), nil
 	}
 
-	return nil, 0, m.Err()
+	err = m.Err()
+	if err != nil {
+		return nil, 0, err
+	}
+	// net/http同様、必ずBodyがCloseできるようにする
+	return io.NopCloser(strings.NewReader("")), 0, nil
 }
 
 type ProgressTracker struct {
