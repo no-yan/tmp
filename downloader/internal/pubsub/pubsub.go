@@ -45,13 +45,15 @@ func (p *Publisher[T]) Publish(event T) {
 }
 
 func (p *Publisher[T]) PublishWithContext(ctx context.Context, event T) {
+	subsCopy := make([]Subscriber[T], len(p.sub))
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	copy(subsCopy, p.sub)
+	p.mu.Unlock()
 
-	for _, obs := range p.sub {
+	for _, sub := range subsCopy {
 		if err := ctx.Err(); err != nil {
 			return
 		}
-		obs.HandleEvent(event)
+		sub.HandleEvent(event)
 	}
 }
