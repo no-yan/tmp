@@ -66,7 +66,7 @@ func Combine(n, m int) ([][]int, error) {
 
 func Permutate(n, m int) [][]int {
 	// nPm  = n! / (n-r)!
-	result := make([][]int, 0, factorial(m, n))
+	result := make([][]int, 0, productRange(m, n))
 	perm := make([]int, m)
 	used := make([]bool, n)
 
@@ -96,7 +96,7 @@ func Permutate(n, m int) [][]int {
 	return result
 }
 
-func factorial(start, end int) uint {
+func productRange(start, end int) uint {
 	if start > end {
 		err := fmt.Errorf("start is bigger than end; start %d, end %d", start, end)
 		panic(err)
