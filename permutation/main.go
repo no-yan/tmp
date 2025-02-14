@@ -11,7 +11,7 @@ func main() {
 		for m := range min(n, 3) {
 			fmt.Printf("Permutation(%v, %v)\n", n, m)
 			res := Permutate(n, m)
-			print(res)
+			printResult(res)
 		}
 	}
 
@@ -24,12 +24,12 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			print(res)
+			printResult(res)
 		}
 	}
 }
 
-func print(lines [][]int) {
+func printResult(lines [][]int) {
 	fmt.Println("Count: ", len(lines))
 	for _, line := range lines {
 		fmt.Println(line)
