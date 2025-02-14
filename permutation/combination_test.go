@@ -1,10 +1,12 @@
 package main_test
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	main "github.com/no-yan/tmp/permutation"
 )
 
@@ -59,5 +61,34 @@ func TestCombine(t *testing.T) {
 				t.Errorf("Combine() mismatch; diff\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestCombineLex(t *testing.T) {
+	for n := range 15 {
+		for m := range min(n, 5) {
+			t.Run(fmt.Sprintf("%dC%d", n, m), func(t *testing.T) {
+				orig, err := main.Combine(n, m)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				lex := main.CombineLex(n, m)
+
+				sortOpts := cmpopts.SortSlices(func(a, b []int) bool {
+					for i := range min(len(a), len(b)) {
+						if a[i] == b[i] {
+							continue
+						}
+						return a[i] < b[i]
+					}
+					return true
+				})
+
+				if diff := cmp.Diff(orig, lex, sortOpts); diff != "" {
+					t.Errorf("Combine(%d, %d) mismatch; diff\n%s", m, n, diff)
+				}
+			})
+		}
 	}
 }

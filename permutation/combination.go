@@ -35,7 +35,7 @@ func Combine(n, m int) ([][]int, error) {
 }
 
 func CombineLex(n, m int) [][]int {
-	result := make([][]int, 0, productRange(n-m+1, n))
+	result := make([][]int, 0, productRange(min(n-m+1, 0), n))
 	comb := make([]int, m)
 
 	var dfs func(int)
