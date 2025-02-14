@@ -39,7 +39,10 @@ func print(lines [][]int) {
 func Combine(n, m int) ([][]int, error) {
 	result := make([][]int, 0)
 	if n > math.MaxInt {
-		return nil, fmt.Errorf("%d is too large; max: %d", n, 64)
+		// copied from math/const.go
+		// https://cs.opensource.google/go/go/+/refs/tags/go1.24.0:src/math/const.go;l=40
+		intSize := 32 << (^uint(0) >> 63) // 32 or 64
+		return nil, fmt.Errorf("%d is too large; max: %d", n, intSize)
 	}
 	nbits := uint(1) << n
 
