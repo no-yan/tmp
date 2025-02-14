@@ -33,3 +33,30 @@ func Combine(n, m int) ([][]int, error) {
 
 	return result, nil
 }
+
+func CombineLex(n, m int) [][]int {
+	result := make([][]int, 0, productRange(n-m+1, n))
+	comb := make([]int, m)
+
+	var dfs func(int)
+	dfs = func(depth int) {
+		if depth == m {
+			cp := make([]int, m)
+			copy(cp, comb)
+			result = append(result, cp)
+			return
+		}
+
+		minI := 0
+		if depth > 0 {
+			minI = comb[depth-1] + 1
+		}
+		for i := minI; i < n; i++ {
+			comb[depth] = i
+			dfs(depth + 1)
+		}
+		comb[depth] = -1
+	}
+	dfs(0)
+	return result
+}
