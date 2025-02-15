@@ -64,9 +64,10 @@ func TestCombine(t *testing.T) {
 	}
 }
 
+// オリジナルの実装と出力が同じことを確認する
 func TestCombineLex(t *testing.T) {
 	for n := range 15 {
-		for m := range min(n, 5) {
+		for m := range n {
 			t.Run(fmt.Sprintf("%dC%d", n, m), func(t *testing.T) {
 				orig, err := main.Combine(n, m)
 				if err != nil {
