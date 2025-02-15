@@ -35,8 +35,7 @@ func printResult(lines [][]int) {
 }
 
 func Permutate(n, m int) [][]int {
-	// nPm  = n! / (n-r)!
-	result := make([][]int, 0, productRange(m, n))
+	result := make([][]int, 0, productRange(m, n)) // nPm  = n! / (n-r)!
 	perm := make([]int, m)
 	used := make([]bool, n)
 
