@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 oxc_allocator = "0.89.0"
+oxc_ast = "0.89.0"
 oxc_cfg = "0.89.0"
 oxc_parser = "0.89.0"
 oxc_semantic = {version = "0.89.0", features=["cfg"]}
