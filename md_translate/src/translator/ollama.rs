@@ -42,8 +42,20 @@ impl OllamaClient {
 
     pub async fn translate(&self, text: &str) -> Result<String> {
         let prompt = format!(
-            "You are a professional translator. Translate the following English markdown text to Japanese. \
-             Keep markdown formatting intact. Do not translate code blocks, URLs, or technical terms.\n\n{}",
+            r#"You are a professional translator. Translate ONLY the text content from English to Japanese.
+
+CRITICAL RULES - Follow these strictly:
+- Do NOT add any markdown syntax (no ```, ---, #, *, _, etc.)
+- Do NOT add extra paragraphs or line breaks beyond what exists in the original
+- Do NOT add code blocks, horizontal rules, or heading markers
+- Do NOT add any formatting that wasn't in the original text
+- Translate ONLY the plain text content, nothing else
+- Keep the exact same structure as the input
+
+INPUT TEXT:
+{}
+
+OUTPUT (translated text only, no explanations):"#,
             text
         );
 

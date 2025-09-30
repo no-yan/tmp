@@ -1,6 +1,6 @@
-use md_translate::error::{MdTranslateError, Result};
-use md_translate::translator::TranslationService;
 use async_trait::async_trait;
+use md_translate::error::Result;
+use md_translate::translator::TranslationService;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -28,6 +28,7 @@ impl MockTranslationService {
     }
 
     /// Create mock with specific responses
+    #[allow(dead_code)]
     pub fn with_responses(responses: Vec<Result<String>>) -> Self {
         Self {
             model_name: "mock-model".to_string(),
@@ -37,6 +38,7 @@ impl MockTranslationService {
     }
 
     /// Create mock that simulates network delay
+    #[allow(dead_code)]
     pub fn with_delay(delay_ms: u64) -> Self {
         Self {
             model_name: "mock-model".to_string(),

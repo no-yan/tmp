@@ -1490,14 +1490,14 @@ tempfile = "3"
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] CLI tests compile: `cargo test --test cli_commands_test --no-run`
-- [ ] CLI tests pass: `cargo test cli_commands_test`
-- [ ] All tests pass: `cargo test`
+- [x] CLI tests compile: `cargo test --test cli_commands_test --no-run`
+- [x] CLI tests pass: `cargo test cli_commands_test`
+- [x] All tests pass: `cargo test`
 
 #### Manual Verification:
-- [ ] Verify temp files are cleaned up after tests
-- [ ] Check that command handlers work correctly with real Ollama
-- [ ] Validate error handling for missing files, permissions, etc.
+- [x] Verify temp files are cleaned up after tests
+- [x] Check that command handlers work correctly with real Ollama
+- [x] Validate error handling for missing files, permissions, etc.
 
 ---
 

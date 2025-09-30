@@ -1,26 +1,25 @@
 use crate::cli::*;
 use crate::error::Result;
-use crate::translator::{Translator, TranslatorConfig};
+use crate::translator::{CacheBackend, TranslationService, Translator, TranslatorConfig};
 use colored::Colorize;
 use std::path::Path;
 
-pub async fn handle_translate(args: TranslateArgs) -> Result<()> {
+/// Generic version of handle_translate for testing
+pub async fn handle_translate_with_translator<T, C>(
+    translator: &mut Translator<T, C>,
+    args: &TranslateArgs,
+) -> Result<()>
+where
+    T: TranslationService,
+    C: CacheBackend,
+{
     let input = std::fs::read_to_string(&args.file)?;
-
-    let config = TranslatorConfig {
-        use_cache: !args.no_cache,
-        show_progress: true,
-        ..Default::default()
-    };
-
-    let mut translator = Translator::new(args.ollama_url, args.model, config)?;
 
     println!("{}", "Translating markdown...".cyan());
     let translated = translator.translate_markdown(&input).await?;
-    dbg!(translated.clone());
 
-    if let Some(output_path) = args.output {
-        std::fs::write(&output_path, translated)?;
+    if let Some(output_path) = &args.output {
+        std::fs::write(output_path, &translated)?;
         println!("{} {}", "Saved to:".green(), output_path);
     } else {
         println!("{}", translated);
@@ -43,16 +42,28 @@ pub async fn handle_translate(args: TranslateArgs) -> Result<()> {
     Ok(())
 }
 
-pub async fn handle_cache(args: CacheArgs) -> Result<()> {
+pub async fn handle_translate(args: TranslateArgs) -> Result<()> {
+    let config = TranslatorConfig {
+        use_cache: !args.no_cache,
+        show_progress: true,
+        ..Default::default()
+    };
+
+    let mut translator = Translator::new(args.ollama_url.clone(), args.model.clone(), config)?;
+    handle_translate_with_translator(&mut translator, &args).await
+}
+
+/// Generic version of handle_cache for testing
+pub async fn handle_cache_with_translator<T, C>(
+    translator: &mut Translator<T, C>,
+    args: &CacheArgs,
+) -> Result<()>
+where
+    T: TranslationService,
+    C: CacheBackend,
+{
     match args.command {
         CacheCommands::Stats => {
-            let config = TranslatorConfig::default();
-            let mut translator = Translator::new(
-                "http://localhost:11434".to_string(),
-                "qwen2.5:7b".to_string(),
-                config,
-            )?;
-
             let stats = translator.cache_stats();
             println!("{}", "Cache Statistics:".cyan().bold());
             println!("  Total Requests: {}", stats.total_requests);
@@ -65,13 +76,6 @@ pub async fn handle_cache(args: CacheArgs) -> Result<()> {
             );
         }
         CacheCommands::Clear => {
-            let config = TranslatorConfig::default();
-            let translator = Translator::new(
-                "http://localhost:11434".to_string(),
-                "qwen2.5:7b".to_string(),
-                config,
-            )?;
-
             translator.clear_cache()?;
             println!("{}", "Cache cleared successfully".green());
         }
@@ -80,19 +84,31 @@ pub async fn handle_cache(args: CacheArgs) -> Result<()> {
     Ok(())
 }
 
-pub async fn handle_view(args: ViewArgs) -> Result<()> {
+pub async fn handle_cache(args: CacheArgs) -> Result<()> {
+    let config = TranslatorConfig::default();
+    let mut translator = Translator::new(
+        "http://localhost:11434".to_string(),
+        "qwen2.5:7b".to_string(),
+        config,
+    )?;
+
+    handle_cache_with_translator(&mut translator, &args).await
+}
+
+/// Generic version of handle_view for testing
+pub async fn handle_view_with_translator<T, C>(
+    translator: &mut Translator<T, C>,
+    args: &ViewArgs,
+) -> Result<()>
+where
+    T: TranslationService,
+    C: CacheBackend,
+{
     let input = std::fs::read_to_string(&args.file)?;
     let title = Path::new(&args.file)
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("Translated Document");
-
-    let config = TranslatorConfig {
-        show_progress: true,
-        ..Default::default()
-    };
-
-    let mut translator = Translator::new(args.ollama_url, args.model, config)?;
 
     println!("{}", "Translating and generating HTML...".cyan());
     let html = translator.translate_to_html(&input, title).await?;
@@ -113,4 +129,14 @@ pub async fn handle_view(args: ViewArgs) -> Result<()> {
     }
 
     Ok(())
+}
+
+pub async fn handle_view(args: ViewArgs) -> Result<()> {
+    let config = TranslatorConfig {
+        show_progress: true,
+        ..Default::default()
+    };
+
+    let mut translator = Translator::new(args.ollama_url.clone(), args.model.clone(), config)?;
+    handle_view_with_translator(&mut translator, &args).await
 }
