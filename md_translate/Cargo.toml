@@ -1,0 +1,58 @@
+[package]
+name = "md_translate"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP Client (Ollama API)
+reqwest = { version = "0.12", features = ["json"] }
+
+# Markdown parsing
+pulldown-cmark = "0.11"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Hashing for cache keys
+sha2 = "0.10"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Async trait support
+async-trait = "0.1"
+
+# Web server (optional, for serve command)
+axum = { version = "0.7", optional = true }
+tower-http = { version = "0.5", features = ["fs", "trace"], optional = true }
+tokio-tungstenite = { version = "0.21", optional = true }
+
+# File watching (optional, for serve command)
+notify = { version = "6", optional = true }
+
+# Progress bars
+indicatif = "0.17"
+
+# Terminal colors
+colored = "2"
+
+# Cache directory
+dirs = "5"
+
+# Timestamps
+chrono = { version = "0.4", features = ["serde"] }
+
+# Browser opening
+open = "5"
+
+[features]
+default = ["server"]
+server = ["axum", "tower-http", "tokio-tungstenite", "notify"]
