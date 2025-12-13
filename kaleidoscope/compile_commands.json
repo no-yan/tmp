@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/Users/noyan/ghq/github.com/no-yan/tmp/kaleidoscope/build",
+  "command": "/usr/bin/c++ -DEXPERIMENTAL_KEY_INSTRUCTIONS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I/opt/homebrew/Cellar/llvm/21.1.7/include -I/Users/noyan/ghq/github.com/no-yan/tmp/kaleidoscope/include -isystem /opt/homebrew/include -std=gnu++17 -arch arm64 -o CMakeFiles/kaleidoscope.dir/src/main.cpp.o -c /Users/noyan/ghq/github.com/no-yan/tmp/kaleidoscope/src/main.cpp",
+  "file": "/Users/noyan/ghq/github.com/no-yan/tmp/kaleidoscope/src/main.cpp",
+  "output": "CMakeFiles/kaleidoscope.dir/src/main.cpp.o"
+}
+]
